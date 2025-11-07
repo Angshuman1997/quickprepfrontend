@@ -1,34 +1,20 @@
 # How to implement global error handling for APIs?
 
-## Question
-How to implement global error handling for APIs?
+## Simple Answer
+Implement global error handling using Axios interceptors to catch all API errors in one place. Categorize errors by type (network, auth, validation, server) and show appropriate user messages.
 
-# How to implement global error handling for APIs?
+## Axios Interceptor Setup
 
-## Question
-How to implement global error handling for APIs?
-
-## Answer
-
-Global error handling for APIs provides a centralized way to handle errors across your application. This ensures consistent error handling, logging, and user experience.
-
-## Axios Global Error Handling
-
-### Setting up Axios Interceptors
 ```javascript
-// api/client.js
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
-// Create axios instance
 const apiClient = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  timeout: 10000
 });
 
-// Request interceptor for auth
+// Request interceptor - add auth token
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -40,25 +26,20 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
+// Response interceptor - handle errors globally
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Handle different error types
-    return handleApiError(error);
-  }
+  (error) => handleApiError(error)
 );
 
 export default apiClient;
 ```
 
-### Global Error Handler
-```javascript
-// api/errorHandler.js
-import { toast } from 'react-toastify';
+## Global Error Handler
 
-export const handleApiError = (error) => {
-  // Network error
+```javascript
+const handleApiError = (error) => {
+  // Network error (no response)
   if (!error.response) {
     toast.error('Network error. Please check your connection.');
     return Promise.reject({
@@ -69,85 +50,58 @@ export const handleApiError = (error) => {
 
   const { status, data } = error.response;
 
-  // Handle different HTTP status codes
   switch (status) {
     case 400:
-      handleValidationError(data);
+    case 422:
+      // Validation errors
+      const errors = data.errors || {};
+      const firstError = Object.values(errors)[0];
+      toast.error(firstError || 'Please check your input');
       break;
-    
+
     case 401:
-      handleAuthenticationError();
+      // Authentication error
+      toast.error('Session expired. Please login again.');
+      localStorage.removeItem('authToken');
+      window.location.href = '/login';
       break;
-    
+
     case 403:
-      handleAuthorizationError();
+      // Permission error
+      toast.error('You do not have permission for this action');
       break;
-    
+
     case 404:
-      handleNotFoundError();
+      // Not found
+      toast.error('The requested item was not found');
       break;
-    
+
     case 429:
-      handleRateLimitError(data);
+      // Rate limiting
+      toast.error('Too many requests. Please wait a moment.');
       break;
-    
+
     case 500:
     case 502:
     case 503:
     case 504:
-      handleServerError();
+      // Server errors
+      toast.error('Server error. Please try again later.');
       break;
-    
+
     default:
-      handleGenericError(status);
+      toast.error(`An error occurred (${status}). Please try again.`);
   }
 
-  // Log error for debugging
-  console.error('API Error:', {
-    status,
-    url: error.config?.url,
-    message: data?.message || error.message
-  });
+  // Log for debugging
+  console.error('API Error:', { status, url: error.config?.url, message: data?.message });
 
   return Promise.reject(error);
 };
-
-const handleValidationError = (data) => {
-  const errors = data.errors || {};
-  const firstError = Object.values(errors)[0];
-  toast.error(firstError || 'Please check your input');
-};
-
-const handleAuthenticationError = () => {
-  toast.error('Session expired. Please login again.');
-  localStorage.removeItem('authToken');
-  // Redirect to login page
-  window.location.href = '/login';
-};
-
-const handleAuthorizationError = () => {
-  toast.error('You do not have permission to perform this action');
-};
-
-const handleNotFoundError = () => {
-  toast.error('The requested resource was not found');
-};
-
-const handleRateLimitError = (data) => {
-  const retryAfter = data.retryAfter || 60;
-  toast.error(`Too many requests. Please wait ${retryAfter} seconds.`);
-};
-
-const handleServerError = () => {
-  toast.error('Server error. Please try again later.');
-};
-
-const handleGenericError = (status) => {
-  toast.error(`An error occurred (${status}). Please try again.`);
-};
 ```
 
-### Using the API Client
+## Using the API Client
+
 ```javascript
 // api/users.js
 import apiClient from './client';
@@ -158,43 +112,33 @@ export const updateUser = (id, userData) => apiClient.put(`/users/${id}`, userDa
 export const deleteUser = (id) => apiClient.delete(`/users/${id}`);
 ```
 
-## React Error Boundaries
+## React Error Boundary
 
-### API Error Boundary
 ```javascript
-// components/ApiErrorBoundary.js
 import React from 'react';
-import { toast } from 'react-toastify';
 
 class ApiErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+    return { hasError: true };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log error details
-    console.error('API Error Boundary caught an error:', error, errorInfo);
-    
-    // Report to error tracking service
-    if (window.Sentry) {
-      window.Sentry.captureException(error);
-    }
+    console.error('Error caught by boundary:', error, errorInfo);
+    // Could send to error tracking service like Sentry
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="error-boundary">
+        <div className="error-fallback">
           <h2>Something went wrong</h2>
-          <p>An unexpected error occurred while processing your request.</p>
-          <button 
-            onClick={() => this.setState({ hasError: false, error: null })}
-          >
+          <p>An unexpected error occurred.</p>
+          <button onClick={() => this.setState({ hasError: false })}>
             Try Again
           </button>
         </div>
@@ -208,129 +152,11 @@ class ApiErrorBoundary extends React.Component {
 export default ApiErrorBoundary;
 ```
 
-### Using Error Boundary
-```javascript
-// App.js
-import ApiErrorBoundary from './components/ApiErrorBoundary';
-
-function App() {
-  return (
-    <ApiErrorBoundary>
-      <UserManagement />
-    </ApiErrorBoundary>
-  );
-}
-```
-
-## React Query Global Error Handling
-
-### React Query Client Setup
-```javascript
-// api/queryClient.js
-import { QueryClient } from 'react-query';
-import { toast } from 'react-toastify';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: (failureCount, error) => {
-        // Don't retry on 4xx errors
-        if (error?.response?.status >= 400 && error?.response?.status < 500) {
-          return false;
-        }
-        // Retry up to 3 times for other errors
-        return failureCount < 3;
-      },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
-    },
-    mutations: {
-      onError: (error) => {
-        handleMutationError(error);
-      }
-    }
-  }
-});
-
-// Global error handler for queries
-queryClient.getQueryCache().subscribe((event) => {
-  if (event?.type === 'error') {
-    handleQueryError(event.error);
-  }
-});
-
-const handleQueryError = (error) => {
-  if (error?.response?.status === 401) {
-    // Handle authentication globally
-    handleAuthenticationError();
-  } else if (error?.response?.status >= 500) {
-    toast.error('Server error. Please try again later.');
-  }
-};
-
-const handleMutationError = (error) => {
-  if (error?.response?.status === 409) {
-    toast.error('This action conflicts with existing data.');
-  } else {
-    toast.error('Failed to save changes. Please try again.');
-  }
-};
-
-export default queryClient;
-```
-
-### Using React Query with Error Handling
-```javascript
-// components/UserList.js
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { getUsers, createUser, updateUser, deleteUser } from '../api/users';
-
-export const UserList = () => {
-  const queryClient = useQueryClient();
-  
-  const { data: users, isLoading, error } = useQuery('users', getUsers, {
-    onError: (error) => {
-      // Specific error handling for this query
-      if (error?.response?.status === 403) {
-        toast.error('You do not have permission to view users');
-      }
-    }
-  });
-
-  const createMutation = useMutation(createUser, {
-    onSuccess: () => {
-      queryClient.invalidateQueries('users');
-      toast.success('User created successfully');
-    },
-    onError: (error) => {
-      // Mutation-specific error handling
-      if (error?.response?.status === 409) {
-        toast.error('User with this email already exists');
-      }
-    }
-  });
-
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading users</div>;
-
-  return (
-    <div>
-      {/* User list */}
-      <button onClick={() => createMutation.mutate({ name: 'New User' })}>
-        Add User
-      </button>
-    </div>
-  );
-};
-```
-
 ## Custom Hook for API Calls
 
-### API Hook with Error Handling
 ```javascript
-// hooks/useApi.js
 import { useState, useCallback } from 'react';
 import apiClient from '../api/client';
-import { toast } from 'react-toastify';
 
 export const useApi = () => {
   const [loading, setLoading] = useState(false);
@@ -345,198 +171,70 @@ export const useApi = () => {
       return response.data;
     } catch (err) {
       setError(err);
-      
-      // Re-throw for component-specific handling
-      throw err;
+      throw err; // Let global handler deal with it
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const get = useCallback((url, config = {}) => 
-    makeRequest({ ...config, method: 'get', url }), [makeRequest]);
-
-  const post = useCallback((url, data, config = {}) => 
-    makeRequest({ ...config, method: 'post', url, data }), [makeRequest]);
-
-  const put = useCallback((url, data, config = {}) => 
-    makeRequest({ ...config, method: 'put', url, data }), [makeRequest]);
-
-  const del = useCallback((url, config = {}) => 
-    makeRequest({ ...config, method: 'delete', url }), [makeRequest]);
+  const get = (url) => makeRequest({ method: 'get', url });
+  const post = (url, data) => makeRequest({ method: 'post', url, data });
+  const put = (url, data) => makeRequest({ method: 'put', url, data });
+  const del = (url) => makeRequest({ method: 'delete', url });
 
   return { get, post, put, del, loading, error };
 };
 ```
 
-### Using the API Hook
+## Testing Error Handling
+
 ```javascript
-// components/UserForm.js
-import { useState } from 'react';
-import { useApi } from '../hooks/useApi';
-
-export const UserForm = () => {
-  const { post, loading } = useApi();
-  const [formData, setFormData] = useState({ name: '', email: '' });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await post('/users', formData);
-      toast.success('User created successfully');
-      setFormData({ name: '', email: '' });
-    } catch (error) {
-      // Error already handled globally by interceptor
-      // Component-specific handling if needed
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
-        placeholder="Name"
-        value={formData.name}
-        onChange={(e) => setFormData({...formData, name: e.target.value})}
-      />
-      <input
-        type="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={(e) => setFormData({...formData, email: e.target.value})}
-      />
-      <button type="submit" disabled={loading}>
-        {loading ? 'Creating...' : 'Create User'}
-      </button>
-    </form>
-  );
-};
-```
-
-## Testing Global Error Handling
-
-### Testing Axios Interceptors
-```javascript
-// api/client.test.js
-import axios from 'axios';
-import apiClient from './client';
-import * as errorHandler from './errorHandler';
-
-jest.mock('./errorHandler');
-jest.mock('axios');
-
-describe('API Client', () => {
-  it('should add authorization header to requests', async () => {
-    const mockToken = 'mock-jwt-token';
-    localStorage.setItem('authToken', mockToken);
-
-    const mockResponse = { data: 'success' };
-    axios.mockResolvedValueOnce(mockResponse);
-
-    await apiClient.get('/test');
-
-    expect(axios).toHaveBeenCalledWith({
-      method: 'get',
-      url: '/test',
-      headers: expect.objectContaining({
-        Authorization: `Bearer ${mockToken}`
-      })
-    });
-  });
-
-  it('should handle response errors globally', async () => {
-    const mockError = new Error('API Error');
-    mockError.response = { status: 500 };
-    
-    axios.mockRejectedValueOnce(mockError);
-    
-    errorHandler.handleApiError.mockResolvedValueOnce();
-
-    await expect(apiClient.get('/test')).rejects.toThrow('API Error');
-    expect(errorHandler.handleApiError).toHaveBeenCalledWith(mockError);
-  });
-});
-```
-
-### Testing Error Handler
-```javascript
-// api/errorHandler.test.js
-import { handleApiError } from './errorHandler';
-import { toast } from 'react-toastify';
-
-jest.mock('react-toastify');
-
-describe('handleApiError', () => {
-  beforeEach(() => {
-    toast.error.mockClear();
-  });
-
-  it('should handle network errors', async () => {
-    const error = {
-      request: {},
-      message: 'Network Error'
-    };
-
-    await expect(handleApiError(error)).rejects.toEqual({
-      type: 'NETWORK_ERROR',
-      message: 'Network connection failed'
-    });
-
+describe('Global Error Handler', () => {
+  it('handles network errors', () => {
+    const error = { request: {} }; // No response
+    handleApiError(error);
     expect(toast.error).toHaveBeenCalledWith('Network error. Please check your connection.');
   });
 
-  it('should handle 401 authentication errors', async () => {
-    const error = {
-      response: { status: 401 }
-    };
-
-    await expect(handleApiError(error)).rejects.toBe(error);
-
+  it('handles auth errors', () => {
+    const error = { response: { status: 401 } };
+    handleApiError(error);
     expect(toast.error).toHaveBeenCalledWith('Session expired. Please login again.');
   });
 
-  it('should handle 400 validation errors', async () => {
+  it('handles validation errors', () => {
     const error = {
       response: {
         status: 400,
-        data: {
-          errors: { email: 'Invalid email' }
-        }
+        data: { errors: { email: 'Invalid format' } }
       }
     };
-
-    await expect(handleApiError(error)).rejects.toBe(error);
-
-    expect(toast.error).toHaveBeenCalledWith('Invalid email');
-  });
-
-  it('should handle 500 server errors', async () => {
-    const error = {
-      response: { status: 500 }
-    };
-
-    await expect(handleApiError(error)).rejects.toBe(error);
-
-    expect(toast.error).toHaveBeenCalledWith('Server error. Please try again later.');
+    handleApiError(error);
+    expect(toast.error).toHaveBeenCalledWith('Invalid format');
   });
 });
 ```
 
+## Interview Q&A
+
+**Q: How do you implement global error handling in a React app?**
+A: I use Axios interceptors to catch all API errors globally. In the response interceptor, I check the error type and show appropriate user messages. For auth errors, I redirect to login. For validation errors, I show field-specific messages. For server errors, I show a generic message with retry option.
+
+**Q: What's the difference between error boundaries and global error handling?**
+A: Error boundaries catch JavaScript errors in the React component tree to prevent app crashes. Global error handling (via interceptors) catches API errors specifically. Both are important for good user experience.
+
+**Q: How do you test error handling?**
+A: I mock axios responses with different status codes and test that the right error messages are displayed. I also test that the correct actions are taken, like redirects for auth errors or field error display for validation errors.
+
+**Q: Should you retry failed requests automatically?**
+A: Yes for network errors and 5xx server errors, but not for 4xx client errors. I implement exponential backoff to avoid overwhelming the server.
+
 ## Best Practices
-
-1. **Centralized handling**: Use interceptors for global error handling
-2. **User-friendly messages**: Translate technical errors to user language
-3. **Logging**: Log errors for debugging while showing friendly messages
-4. **Recovery actions**: Provide ways for users to recover from errors
-5. **Retry logic**: Implement smart retry for transient errors
-6. **Error boundaries**: Prevent app crashes from unhandled errors
-7. **Testing**: Test all error scenarios thoroughly
-
-## Interview Tips
-- **Interceptors**: Axios interceptors for global request/response handling
-- **Error categorization**: Different handling for network, auth, validation errors
-- **User experience**: User-friendly error messages and recovery options
-- **Logging**: Log errors for debugging without exposing to users
-- **Retry logic**: Smart retry for transient failures
-- **Error boundaries**: React error boundaries for graceful error handling
-- **Testing**: Comprehensive testing of error scenarios
+- **Centralized**: Handle all API errors in one place
+- **User-friendly**: Show clear, actionable error messages
+- **Logging**: Log technical details for debugging
+- **Recovery**: Provide retry options where appropriate
+- **Categorization**: Different handling for different error types
+- **Testing**: Test all error scenarios thoroughly
+- **Boundaries**: Use error boundaries to prevent crashes</content>
+<parameter name="filePath">c:\Users\Angshuman\Desktop\MyScripts\QuickReadyInterview\QuickPrepFrontend\08-Testing\implement-global-error-handling-apis-simple.md

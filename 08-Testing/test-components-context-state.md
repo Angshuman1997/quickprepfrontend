@@ -1,182 +1,100 @@
 # How do you test components that use context/state?
 
-## Question
-How do you test components that use context/state?
+## Simple Answer
+Wrap components with the necessary providers in tests. For Redux, use `<Provider store={store}>`. For Context, create a wrapper component. For custom hooks, test them through components that use them.
 
-# How do you test components that use context/state?
+## Testing React Context
 
-## Question
-How do you test components that use context/state?
-
-## Answer
-
-Testing React components that use Context or complex state management requires providing the proper context providers and mocking state as needed. Here are the main approaches:
-
-## Testing Components with Context
-
-### Basic Context Testing
 ```javascript
 // ThemeContext.js
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 
 const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children, theme = 'light' }) => {
-  return (
-    <ThemeContext.Provider value={{ theme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-};
+export const ThemeProvider = ({ children, theme = 'light' }) => (
+  <ThemeContext.Provider value={{ theme }}>
+    {children}
+  </ThemeContext.Provider>
+);
 
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider');
-  }
-  return context;
-};
+export const useTheme = () => useContext(ThemeContext);
 ```
 
 ```javascript
 // ThemedButton.js
-import React from 'react';
 import { useTheme } from './ThemeContext';
 
-export const ThemedButton = ({ children, onClick }) => {
+const ThemedButton = ({ children }) => {
   const { theme } = useTheme();
-
-  return (
-    <button
-      className={`btn btn-${theme}`}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
+  return <button className={`btn-${theme}`}>{children}</button>;
 };
+
+export default ThemedButton;
 ```
 
 ```javascript
 // ThemedButton.test.js
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { ThemeProvider } from './ThemeContext';
-import { ThemedButton } from './ThemedButton';
+import ThemedButton from './ThemedButton';
+
+const renderWithTheme = (component, theme = 'light') =>
+  render(<ThemeProvider theme={theme}>{component}</ThemeProvider>);
 
 describe('ThemedButton', () => {
-  const renderWithTheme = (component, theme = 'light') => {
-    return render(
-      <ThemeProvider theme={theme}>
-        {component}
-      </ThemeProvider>
-    );
-  };
-
-  it('should render with light theme by default', () => {
+  it('should apply light theme by default', () => {
     renderWithTheme(<ThemedButton>Click me</ThemedButton>);
-
-    const button = screen.getByRole('button', { name: /click me/i });
-    expect(button).toHaveClass('btn btn-light');
+    expect(screen.getByRole('button')).toHaveClass('btn-light');
   });
 
-  it('should render with dark theme', () => {
+  it('should apply dark theme', () => {
     renderWithTheme(<ThemedButton>Click me</ThemedButton>, 'dark');
-
-    const button = screen.getByRole('button', { name: /click me/i });
-    expect(button).toHaveClass('btn btn-dark');
-  });
-
-  it('should handle click events', () => {
-    const handleClick = jest.fn();
-    renderWithTheme(<ThemedButton onClick={handleClick}>Click me</ThemedButton>);
-
-    const button = screen.getByRole('button', { name: /click me/i });
-    fireEvent.click(button);
-
-    expect(handleClick).toHaveBeenCalledTimes(1);
-  });
-
-  it('should throw error when used outside provider', () => {
-    // Suppress console.error for this test
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-    expect(() => render(<ThemedButton>Click me</ThemedButton>))
-      .toThrow('useTheme must be used within ThemeProvider');
-
-    consoleSpy.mockRestore();
+    expect(screen.getByRole('button')).toHaveClass('btn-dark');
   });
 });
 ```
 
-## Testing Components with Redux
-
-### Redux Store Testing
-```javascript
-// store.js
-import { configureStore } from '@reduxjs/toolkit';
-import counterReducer from './counterSlice';
-
-export const createStore = (preloadedState) => {
-  return configureStore({
-    reducer: {
-      counter: counterReducer
-    },
-    preloadedState
-  });
-};
-```
+## Testing Redux Components
 
 ```javascript
 // Counter.js
-import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { increment, decrement } from './counterSlice';
+import { increment } from './counterSlice';
 
-export const Counter = () => {
+const Counter = () => {
   const count = useSelector(state => state.counter.value);
   const dispatch = useDispatch();
 
   return (
     <div>
-      <div data-testid="count">{count}</div>
+      <span data-testid="count">{count}</span>
       <button onClick={() => dispatch(increment())}>+</button>
-      <button onClick={() => dispatch(decrement())}>-</button>
     </div>
   );
 };
+
+export default Counter;
 ```
 
 ```javascript
 // Counter.test.js
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { createStore } from './store';
-import { Counter } from './Counter';
+import { configureStore } from '@reduxjs/toolkit';
+import counterReducer from './counterSlice';
+import Counter from './Counter';
 
-const renderWithRedux = (
-  component,
-  initialState = { counter: { value: 0 } }
-) => {
-  const store = createStore(initialState);
-  return {
-    ...render(
-      <Provider store={store}>
-        {component}
-      </Provider>
-    ),
-    store
-  };
+const renderWithRedux = (component, initialState = {}) => {
+  const store = configureStore({
+    reducer: { counter: counterReducer },
+    preloadedState: initialState
+  });
+
+  return render(<Provider store={store}>{component}</Provider>);
 };
 
 describe('Counter', () => {
   it('should display initial count', () => {
-    renderWithRedux(<Counter />);
-    expect(screen.getByTestId('count')).toHaveTextContent('0');
-  });
-
-  it('should display custom initial count', () => {
     renderWithRedux(<Counter />, { counter: { value: 5 } });
     expect(screen.getByTestId('count')).toHaveTextContent('5');
   });
@@ -184,197 +102,112 @@ describe('Counter', () => {
   it('should increment count', () => {
     renderWithRedux(<Counter />);
 
-    const incrementButton = screen.getByText('+');
-    fireEvent.click(incrementButton);
-
+    fireEvent.click(screen.getByText('+'));
     expect(screen.getByTestId('count')).toHaveTextContent('1');
-  });
-
-  it('should decrement count', () => {
-    renderWithRedux(<Counter />, { counter: { value: 3 } });
-
-    const decrementButton = screen.getByText('-');
-    fireEvent.click(decrementButton);
-
-    expect(screen.getByTestId('count')).toHaveTextContent('2');
-  });
-
-  it('should update store state correctly', () => {
-    const { store } = renderWithRedux(<Counter />);
-
-    const incrementButton = screen.getByText('+');
-    fireEvent.click(incrementButton);
-    fireEvent.click(incrementButton);
-
-    expect(store.getState().counter.value).toBe(2);
   });
 });
 ```
 
-## Testing Components with Zustand
+## Testing Zustand Store
 
-### Zustand Store Testing
 ```javascript
 // useCounterStore.js
 import { create } from 'zustand';
 
 export const useCounterStore = create((set) => ({
   count: 0,
-  increment: () => set((state) => ({ count: state.count + 1 })),
-  decrement: () => set((state) => ({ count: state.count - 1 })),
-  reset: () => set({ count: 0 })
+  increment: () => set((state) => ({ count: state.count + 1 }))
 }));
 ```
 
 ```javascript
-// CounterZustand.js
-import React from 'react';
+// Counter.js
 import { useCounterStore } from './useCounterStore';
 
-export const CounterZustand = () => {
-  const { count, increment, decrement, reset } = useCounterStore();
+const Counter = () => {
+  const { count, increment } = useCounterStore();
 
   return (
     <div>
-      <div data-testid="count">{count}</div>
+      <span data-testid="count">{count}</span>
       <button onClick={increment}>+</button>
-      <button onClick={decrement}>-</button>
-      <button onClick={reset}>Reset</button>
     </div>
   );
 };
+
+export default Counter;
 ```
 
 ```javascript
-// CounterZustand.test.js
-import React from 'react';
+// Counter.test.js
 import { render, screen, fireEvent } from '@testing-library/react';
-import { CounterZustand } from './CounterZustand';
+import Counter from './Counter';
 
 // Mock the store
 jest.mock('./useCounterStore');
 
-describe('CounterZustand', () => {
+describe('Counter', () => {
   const mockUseCounterStore = require('./useCounterStore').useCounterStore;
-
-  beforeEach(() => {
-    mockUseCounterStore.mockReturnValue({
-      count: 0,
-      increment: jest.fn(),
-      decrement: jest.fn(),
-      reset: jest.fn()
-    });
-  });
 
   it('should display count from store', () => {
     mockUseCounterStore.mockReturnValue({
-      count: 5,
-      increment: jest.fn(),
-      decrement: jest.fn(),
-      reset: jest.fn()
+      count: 3,
+      increment: jest.fn()
     });
 
-    render(<CounterZustand />);
-    expect(screen.getByTestId('count')).toHaveTextContent('5');
+    render(<Counter />);
+    expect(screen.getByTestId('count')).toHaveTextContent('3');
   });
 
-  it('should call increment when + button is clicked', () => {
+  it('should call increment on button click', () => {
     const mockIncrement = jest.fn();
     mockUseCounterStore.mockReturnValue({
       count: 0,
-      increment: mockIncrement,
-      decrement: jest.fn(),
-      reset: jest.fn()
+      increment: mockIncrement
     });
 
-    render(<CounterZustand />);
+    render(<Counter />);
 
-    const incrementButton = screen.getByText('+');
-    fireEvent.click(incrementButton);
-
+    fireEvent.click(screen.getByText('+'));
     expect(mockIncrement).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call decrement when - button is clicked', () => {
-    const mockDecrement = jest.fn();
-    mockUseCounterStore.mockReturnValue({
-      count: 0,
-      increment: jest.fn(),
-      decrement: mockDecrement,
-      reset: jest.fn()
-    });
-
-    render(<CounterZustand />);
-
-    const decrementButton = screen.getByText('-');
-    fireEvent.click(decrementButton);
-
-    expect(mockDecrement).toHaveBeenCalledTimes(1);
-  });
-
-  it('should call reset when reset button is clicked', () => {
-    const mockReset = jest.fn();
-    mockUseCounterStore.mockReturnValue({
-      count: 0,
-      increment: jest.fn(),
-      decrement: jest.fn(),
-      reset: mockReset
-    });
-
-    render(<CounterZustand />);
-
-    const resetButton = screen.getByText('Reset');
-    fireEvent.click(resetButton);
-
-    expect(mockReset).toHaveBeenCalledTimes(1);
   });
 });
 ```
 
-## Testing Components with useState
+## Testing useState Components
 
-### Local State Testing
 ```javascript
-// ToggleButton.js
-import React, { useState } from 'react';
+// Toggle.js
+import { useState } from 'react';
 
-export const ToggleButton = ({ initialState = false }) => {
-  const [isOn, setIsOn] = useState(initialState);
+const Toggle = () => {
+  const [isOn, setIsOn] = useState(false);
 
   return (
-    <button
-      data-testid="toggle-button"
-      onClick={() => setIsOn(!isOn)}
-    >
+    <button onClick={() => setIsOn(!isOn)}>
       {isOn ? 'ON' : 'OFF'}
     </button>
   );
 };
+
+export default Toggle;
 ```
 
 ```javascript
-// ToggleButton.test.js
-import React from 'react';
+// Toggle.test.js
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ToggleButton } from './ToggleButton';
+import Toggle from './Toggle';
 
-describe('ToggleButton', () => {
-  it('should start in OFF state by default', () => {
-    render(<ToggleButton />);
-    expect(screen.getByTestId('toggle-button')).toHaveTextContent('OFF');
+describe('Toggle', () => {
+  it('should start OFF', () => {
+    render(<Toggle />);
+    expect(screen.getByRole('button')).toHaveTextContent('OFF');
   });
 
-  it('should start in ON state when initialState is true', () => {
-    render(<ToggleButton initialState={true} />);
-    expect(screen.getByTestId('toggle-button')).toHaveTextContent('ON');
-  });
+  it('should toggle to ON when clicked', () => {
+    render(<Toggle />);
 
-  it('should toggle from OFF to ON', () => {
-    render(<ToggleButton />);
-
-    const button = screen.getByTestId('toggle-button');
-    expect(button).toHaveTextContent('OFF');
-
+    const button = screen.getByRole('button');
     fireEvent.click(button);
     expect(button).toHaveTextContent('ON');
 
@@ -384,272 +217,80 @@ describe('ToggleButton', () => {
 });
 ```
 
-## Testing Components with useEffect
+## Testing Custom Hooks
 
-### Effect Testing
 ```javascript
-// DataFetcher.js
-import React, { useState, useEffect } from 'react';
+// useCounter.js
+import { useState } from 'react';
 
-export const DataFetcher = ({ url }) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export const useCounter = (initialValue = 0) => {
+  const [count, setCount] = useState(initialValue);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(url);
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const increment = () => setCount(count + 1);
+  const decrement = () => setCount(count - 1);
 
-    fetchData();
-  }, [url]);
-
-  if (loading) return <div data-testid="loading">Loading...</div>;
-  if (error) return <div data-testid="error">{error}</div>;
-  return <div data-testid="data">{JSON.stringify(data)}</div>;
+  return { count, increment, decrement };
 };
 ```
 
 ```javascript
-// DataFetcher.test.js
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import { DataFetcher } from './DataFetcher';
+// useCounter.test.js
+import { renderHook, act } from '@testing-library/react';
+import { useCounter } from './useCounter';
 
-// Mock fetch
-global.fetch = jest.fn();
-
-describe('DataFetcher', () => {
-  beforeEach(() => {
-    fetch.mockClear();
+describe('useCounter', () => {
+  it('should initialize with default value', () => {
+    const { result } = renderHook(() => useCounter());
+    expect(result.current.count).toBe(0);
   });
 
-  it('should show loading initially', () => {
-    fetch.mockResolvedValueOnce({
-      json: () => Promise.resolve({ message: 'Hello' })
-    });
-
-    render(<DataFetcher url="/api/data" />);
-    expect(screen.getByTestId('loading')).toBeInTheDocument();
+  it('should initialize with custom value', () => {
+    const { result } = renderHook(() => useCounter(5));
+    expect(result.current.count).toBe(5);
   });
 
-  it('should fetch and display data', async () => {
-    const mockData = { message: 'Hello World' };
-    fetch.mockResolvedValueOnce({
-      json: () => Promise.resolve(mockData)
+  it('should increment count', () => {
+    const { result } = renderHook(() => useCounter());
+
+    act(() => {
+      result.current.increment();
     });
 
-    render(<DataFetcher url="/api/data" />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('data')).toHaveTextContent(JSON.stringify(mockData));
-    });
-
-    expect(fetch).toHaveBeenCalledWith('/api/data');
+    expect(result.current.count).toBe(1);
   });
 
-  it('should handle fetch errors', async () => {
-    fetch.mockRejectedValueOnce(new Error('Network error'));
+  it('should decrement count', () => {
+    const { result } = renderHook(() => useCounter(2));
 
-    render(<DataFetcher url="/api/data" />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('error')).toHaveTextContent('Network error');
-    });
-  });
-
-  it('should refetch when url changes', async () => {
-    const { rerender } = render(<DataFetcher url="/api/data1" />);
-
-    fetch.mockResolvedValueOnce({
-      json: () => Promise.resolve({ id: 1 })
+    act(() => {
+      result.current.decrement();
     });
 
-    await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/data1');
-    });
-
-    // Change URL
-    fetch.mockResolvedValueOnce({
-      json: () => Promise.resolve({ id: 2 })
-    });
-
-    rerender(<DataFetcher url="/api/data2" />);
-
-    await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('/api/data2');
-    });
+    expect(result.current.count).toBe(1);
   });
 });
 ```
 
-## Testing Custom Hooks with Context
+## Interview Q&A
 
-### Hook Testing with Providers
-```javascript
-// useAuth.js
-import { useContext } from 'react';
-import { AuthContext } from './AuthContext';
+**Q: How do you test a component that uses React Context?**
+A: I wrap the component with the Context Provider in the test. I create a helper function like `renderWithContext` that includes the provider, then test the component behavior with different context values.
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};
-```
+**Q: How do you test Redux-connected components?**
+A: I use the Redux Provider and create a test store with `configureStore`. I can pass initial state to test different scenarios, and check that actions are dispatched correctly when interacting with the component.
 
-```javascript
-// AuthContext.js
-import React, { createContext, useState } from 'react';
+**Q: What's the difference between testing a component vs testing a custom hook?**
+A: For components, I render them and interact with the DOM. For custom hooks, I use `renderHook` from React Testing Library, which gives me access to the hook's return value and allows me to test the hook logic directly.
 
-export const AuthContext = createContext();
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-
-  const login = (userData) => setUser(userData);
-  const logout = () => setUser(null);
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-```
-
-```javascript
-// useAuth.test.js
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { AuthProvider } from './AuthContext';
-
-// Test component that uses the hook
-const TestAuthComponent = () => {
-  const { user, login, logout } = useAuth();
-
-  return (
-    <div>
-      <div data-testid="auth-status">
-        {user ? `Logged in as ${user.name}` : 'Not logged in'}
-      </div>
-      <button onClick={() => login({ name: 'John' })}>Login</button>
-      <button onClick={logout}>Logout</button>
-    </div>
-  );
-};
-
-describe('useAuth', () => {
-  const renderWithAuth = (component) => {
-    return render(
-      <AuthProvider>
-        {component}
-      </AuthProvider>
-    );
-  };
-
-  it('should start with no user', () => {
-    renderWithAuth(<TestAuthComponent />);
-    expect(screen.getByTestId('auth-status')).toHaveTextContent('Not logged in');
-  });
-
-  it('should login user', () => {
-    renderWithAuth(<TestAuthComponent />);
-
-    const loginButton = screen.getByText('Login');
-    fireEvent.click(loginButton);
-
-    expect(screen.getByTestId('auth-status')).toHaveTextContent('Logged in as John');
-  });
-
-  it('should logout user', () => {
-    renderWithAuth(<TestAuthComponent />);
-
-    // Login first
-    fireEvent.click(screen.getByText('Login'));
-    expect(screen.getByTestId('auth-status')).toHaveTextContent('Logged in as John');
-
-    // Then logout
-    fireEvent.click(screen.getByText('Logout'));
-    expect(screen.getByTestId('auth-status')).toHaveTextContent('Not logged in');
-  });
-});
-```
-
-## Advanced Testing Patterns
-
-### Testing Multiple Contexts
-```javascript
-// AppProviders.js
-import React from 'react';
-import { ThemeProvider } from './ThemeContext';
-import { AuthProvider } from './AuthContext';
-import { StoreProvider } from './StoreContext';
-
-export const AppProviders = ({ children }) => {
-  return (
-    <ThemeProvider>
-      <AuthProvider>
-        <StoreProvider>
-          {children}
-        </StoreProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  );
-};
-```
-
-```javascript
-// ComponentWithMultipleContexts.test.js
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { AppProviders } from './AppProviders';
-import { ComponentWithMultipleContexts } from './ComponentWithMultipleContexts';
-
-const renderWithAllProviders = (component) => {
-  return render(
-    <AppProviders>
-      {component}
-    </AppProviders>
-  );
-};
-
-describe('ComponentWithMultipleContexts', () => {
-  it('should work with all required contexts', () => {
-    renderWithAllProviders(<ComponentWithMultipleContexts />);
-
-    // Test component behavior with all contexts available
-    expect(screen.getByTestId('component')).toBeInTheDocument();
-  });
-});
-```
+**Q: How do you test components with multiple contexts?**
+A: I create a wrapper component that includes all the necessary providers, or use a hierarchical structure of providers in the test setup. This ensures all contexts are available when testing the component.
 
 ## Best Practices
-
-1. **Provider Wrappers**: Create reusable provider components for testing
-2. **Mock State**: Use mocks for external state management
-3. **Initial State**: Test components with different initial states
-4. **State Changes**: Test how components respond to state updates
-5. **Error Boundaries**: Test error states and error boundaries
-6. **Async Operations**: Use `waitFor` for async state updates
-7. **Cleanup**: Test that components clean up properly
-
-## Interview Tips
-- **Context**: Wrap components with providers in tests
-- **Redux**: Use Provider with createStore for testing
-- **Zustand**: Mock the store hook for isolation
-- **useState**: Test state changes and initial values
-- **useEffect**: Test side effects and async operations
-- **Multiple contexts**: Create combined provider wrappers
-- **Error handling**: Test error states and boundaries
+- **Provider wrappers**: Create reusable render functions with providers
+- **Mock stores**: For Zustand/Redux, mock the store hooks for isolation
+- **Initial state**: Test components with different initial states
+- **State changes**: Verify state updates happen correctly
+- **Custom hooks**: Use `renderHook` for testing hooks directly
+- **Async effects**: Use `waitFor` for effects that update state asynchronously
+- **Error states**: Test error boundaries and error handling</content>
+<parameter name="filePath">c:\Users\Angshuman\Desktop\MyScripts\QuickReadyInterview\QuickPrepFrontend\08-Testing\test-components-context-state-simple.md

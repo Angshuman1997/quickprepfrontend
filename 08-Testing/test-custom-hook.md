@@ -1,303 +1,209 @@
 # How do you test a custom hook?
 
-## Question
-How do you test a custom hook?
-
-# How do you test a custom hook?
-
-## Question
-How do you test a custom hook?
-
-## Answer
-
-Testing custom hooks in React requires a different approach than testing components because hooks can't be called directly outside of React components. The standard approach is to create a test component that uses the hook and then test the component's behavior.
+## Simple Answer
+Create a test component that uses the hook, then test the component's behavior. Use `renderHook` from `@testing-library/react-hooks` for direct hook testing. Mock any external dependencies like APIs or timers.
 
 ## Testing Custom Hooks
 
-### Basic Hook Testing Pattern
 ```javascript
 // useCounter.js
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 
 export const useCounter = (initialValue = 0) => {
   const [count, setCount] = useState(initialValue);
 
-  const increment = useCallback(() => {
-    setCount(prev => prev + 1);
-  }, []);
+  const increment = () => setCount(count + 1);
+  const decrement = () => setCount(count - 1);
 
-  const decrement = useCallback(() => {
-    setCount(prev => prev - 1);
-  }, []);
-
-  const reset = useCallback(() => {
-    setCount(initialValue);
-  }, [initialValue]);
-
-  return { count, increment, decrement, reset };
+  return { count, increment, decrement };
 };
 ```
+
+## Method 1: Test Component Pattern
 
 ```javascript
 // useCounter.test.js
 import { render, screen, fireEvent } from '@testing-library/react';
 import { useCounter } from './useCounter';
 
-// Test component that uses the hook
-const TestComponent = ({ initialValue }) => {
-  const { count, increment, decrement, reset } = useCounter(initialValue);
+// Create a test component that uses the hook
+const TestCounter = ({ initialValue }) => {
+  const { count, increment, decrement } = useCounter(initialValue);
 
   return (
     <div>
-      <div data-testid="count">{count}</div>
-      <button onClick={increment}>Increment</button>
-      <button onClick={decrement}>Decrement</button>
-      <button onClick={reset}>Reset</button>
+      <span data-testid="count">{count}</span>
+      <button onClick={increment}>+</button>
+      <button onClick={decrement}>-</button>
     </div>
   );
 };
 
 describe('useCounter', () => {
   it('should initialize with default value', () => {
-    render(<TestComponent />);
+    render(<TestCounter />);
     expect(screen.getByTestId('count')).toHaveTextContent('0');
   });
 
   it('should initialize with custom value', () => {
-    render(<TestComponent initialValue={5} />);
+    render(<TestCounter initialValue={5} />);
     expect(screen.getByTestId('count')).toHaveTextContent('5');
   });
 
   it('should increment count', () => {
-    render(<TestComponent />);
-    const incrementButton = screen.getByText('Increment');
+    render(<TestCounter />);
 
-    fireEvent.click(incrementButton);
+    fireEvent.click(screen.getByText('+'));
     expect(screen.getByTestId('count')).toHaveTextContent('1');
-
-    fireEvent.click(incrementButton);
-    expect(screen.getByTestId('count')).toHaveTextContent('2');
   });
 
   it('should decrement count', () => {
-    render(<TestComponent initialValue={5} />);
-    const decrementButton = screen.getByText('Decrement');
+    render(<TestCounter initialValue={3} />);
 
-    fireEvent.click(decrementButton);
-    expect(screen.getByTestId('count')).toHaveTextContent('4');
-  });
-
-  it('should reset count', () => {
-    render(<TestComponent initialValue={10} />);
-    const incrementButton = screen.getByText('Increment');
-    const resetButton = screen.getByText('Reset');
-
-    fireEvent.click(incrementButton);
-    fireEvent.click(incrementButton);
-    expect(screen.getByTestId('count')).toHaveTextContent('12');
-
-    fireEvent.click(resetButton);
-    expect(screen.getByTestId('count')).toHaveTextContent('10');
+    fireEvent.click(screen.getByText('-'));
+    expect(screen.getByTestId('count')).toHaveTextContent('2');
   });
 });
 ```
 
-## Advanced Hook Testing
+## Method 2: renderHook (React Hooks Testing Library)
 
-### Hook with API Calls
 ```javascript
-// useUserData.js
+// useCounter.test.js
+import { renderHook, act } from '@testing-library/react-hooks';
+import { useCounter } from './useCounter';
+
+describe('useCounter with renderHook', () => {
+  it('should initialize with default value', () => {
+    const { result } = renderHook(() => useCounter());
+    expect(result.current.count).toBe(0);
+  });
+
+  it('should increment count', () => {
+    const { result } = renderHook(() => useCounter());
+
+    act(() => {
+      result.current.increment();
+    });
+
+    expect(result.current.count).toBe(1);
+  });
+
+  it('should decrement count', () => {
+    const { result } = renderHook(() => useCounter(5));
+
+    act(() => {
+      result.current.decrement();
+    });
+
+    expect(result.current.count).toBe(4);
+  });
+});
+```
+
+## Testing Hooks with API Calls
+
+```javascript
+// useUser.js
 import { useState, useEffect } from 'react';
 
-export const useUserData = (userId) => {
+export const useUser = (userId) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/users/${userId}`);
-        if (!response.ok) throw new Error('Failed to fetch user');
-        const userData = await response.json();
-        setUser(userData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        setUser(data);
         setLoading(false);
-      }
-    };
-
-    if (userId) {
-      fetchUser();
-    }
+      });
   }, [userId]);
 
-  return { user, loading, error };
+  return { user, loading };
 };
 ```
 
 ```javascript
-// useUserData.test.js
+// useUser.test.js
 import { render, screen, waitFor } from '@testing-library/react';
-import { useUserData } from './useUserData';
+import { useUser } from './useUser';
 
 // Mock fetch
 global.fetch = jest.fn();
 
-const TestComponent = ({ userId }) => {
-  const { user, loading, error } = useUserData(userId);
+const TestUser = ({ userId }) => {
+  const { user, loading } = useUser(userId);
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!user) return <div>No user</div>;
-
-  return (
-    <div>
-      <div data-testid="user-name">{user.name}</div>
-      <div data-testid="user-email">{user.email}</div>
-    </div>
-  );
+  return <div data-testid="user">{user?.name}</div>;
 };
 
-describe('useUserData', () => {
+describe('useUser', () => {
   beforeEach(() => {
     fetch.mockClear();
   });
 
-  it('should show loading initially', () => {
+  it('should fetch user data', async () => {
+    const mockUser = { name: 'John' };
     fetch.mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ name: 'John', email: 'john@test.com' })
-    });
-
-    render(<TestComponent userId="123" />);
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
-  });
-
-  it('should fetch and display user data', async () => {
-    const mockUser = { name: 'John Doe', email: 'john@test.com' };
-    fetch.mockResolvedValueOnce({
-      ok: true,
       json: () => Promise.resolve(mockUser)
     });
 
-    render(<TestComponent userId="123" />);
+    render(<TestUser userId={1} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('user-name')).toHaveTextContent('John Doe');
-      expect(screen.getByTestId('user-email')).toHaveTextContent('john@test.com');
+      expect(screen.getByTestId('user')).toHaveTextContent('John');
     });
 
-    expect(fetch).toHaveBeenCalledWith('/api/users/123');
-  });
-
-  it('should handle API errors', async () => {
-    fetch.mockResolvedValueOnce({
-      ok: false
-    });
-
-    render(<TestComponent userId="123" />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Error: Failed to fetch user')).toBeInTheDocument();
-    });
-  });
-
-  it('should not fetch if no userId', () => {
-    render(<TestComponent />);
-    expect(screen.getByText('No user')).toBeInTheDocument();
-    expect(fetch).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledWith('/api/users/1');
   });
 });
 ```
 
 ## Testing Hooks with Context
 
-### Hook Using Context
 ```javascript
-// useAuth.js
+// useTheme.js
 import { useContext } from 'react';
-import { AuthContext } from './AuthContext';
+import { ThemeContext } from './ThemeContext';
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error('useTheme must be used within ThemeProvider');
   return context;
 };
 ```
 
 ```javascript
-// useAuth.test.js
+// useTheme.test.js
 import { render, screen } from '@testing-library/react';
-import { useAuth } from './useAuth';
-import { AuthProvider } from './AuthContext';
+import { ThemeProvider } from './ThemeContext';
 
-const TestComponent = () => {
-  const { user, login, logout } = useAuth();
-
-  return (
-    <div>
-      <div data-testid="user-status">
-        {user ? `Logged in as ${user.name}` : 'Not logged in'}
-      </div>
-      <button onClick={() => login({ name: 'John' })}>Login</button>
-      <button onClick={logout}>Logout</button>
-    </div>
-  );
+const TestTheme = () => {
+  const { theme } = useTheme();
+  return <div data-testid="theme">{theme}</div>;
 };
 
-describe('useAuth', () => {
-  it('should throw error when used outside provider', () => {
-    // Mock console.error to avoid noise
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-    expect(() => render(<TestComponent />)).toThrow(
-      'useAuth must be used within AuthProvider'
-    );
-
-    consoleSpy.mockRestore();
+describe('useTheme', () => {
+  it('should throw error without provider', () => {
+    expect(() => render(<TestTheme />)).toThrow();
   });
 
-  it('should work within AuthProvider', () => {
+  it('should work with provider', () => {
     render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
+      <ThemeProvider theme="dark">
+        <TestTheme />
+      </ThemeProvider>
     );
 
-    expect(screen.getByTestId('user-status')).toHaveTextContent('Not logged in');
-  });
-
-  it('should handle login/logout', () => {
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    const loginButton = screen.getByText('Login');
-    const logoutButton = screen.getByText('Logout');
-
-    // Login
-    fireEvent.click(loginButton);
-    expect(screen.getByTestId('user-status')).toHaveTextContent('Logged in as John');
-
-    // Logout
-    fireEvent.click(logoutButton);
-    expect(screen.getByTestId('user-status')).toHaveTextContent('Not logged in');
+    expect(screen.getByTestId('theme')).toHaveTextContent('dark');
   });
 });
 ```
 
 ## Testing Async Hooks
 
-### Hook with Debouncing
 ```javascript
 // useDebounce.js
 import { useState, useEffect } from 'react';
@@ -306,13 +212,8 @@ export const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
   }, [value, delay]);
 
   return debouncedValue;
@@ -324,9 +225,9 @@ export const useDebounce = (value, delay) => {
 import { render, screen, act } from '@testing-library/react';
 import { useDebounce } from './useDebounce';
 
-const TestComponent = ({ value, delay }) => {
-  const debouncedValue = useDebounce(value, delay);
-  return <div data-testid="debounced">{debouncedValue}</div>;
+const TestDebounce = ({ value, delay }) => {
+  const debounced = useDebounce(value, delay);
+  return <div data-testid="debounced">{debounced}</div>;
 };
 
 describe('useDebounce', () => {
@@ -335,22 +236,18 @@ describe('useDebounce', () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
     jest.useRealTimers();
   });
 
-  it('should return initial value immediately', () => {
-    render(<TestComponent value="hello" delay={500} />);
-    expect(screen.getByTestId('debounced')).toHaveTextContent('hello');
-  });
-
   it('should debounce value changes', () => {
-    const { rerender } = render(<TestComponent value="hello" delay={500} />);
+    const { rerender } = render(<TestDebounce value="hello" delay={500} />);
+
+    expect(screen.getByTestId('debounced')).toHaveTextContent('hello');
 
     // Change value
-    rerender(<TestComponent value="world" delay={500} />);
+    rerender(<TestDebounce value="world" delay={500} />);
 
-    // Should still show old value immediately
+    // Should still show old value
     expect(screen.getByTestId('debounced')).toHaveTextContent('hello');
 
     // Fast-forward time
@@ -358,165 +255,31 @@ describe('useDebounce', () => {
       jest.advanceTimersByTime(500);
     });
 
-    // Now should show new value
     expect(screen.getByTestId('debounced')).toHaveTextContent('world');
   });
-
-  it('should cancel previous timeout on value change', () => {
-    const { rerender } = render(<TestComponent value="first" delay={500} />);
-
-    // Change value before timeout
-    rerender(<TestComponent value="second" delay={500} />);
-
-    act(() => {
-      jest.advanceTimersByTime(300); // Not enough time for first timeout
-    });
-
-    // Should still show first value
-    expect(screen.getByTestId('debounced')).toHaveTextContent('first');
-
-    // Wait for second timeout
-    act(() => {
-      jest.advanceTimersByTime(200);
-    });
-
-    expect(screen.getByTestId('debounced')).toHaveTextContent('second');
-  });
 });
 ```
 
-## Testing Hook Callbacks
+## Interview Q&A
 
-### Hook with Event Listeners
-```javascript
-// useWindowSize.js
-import { useState, useEffect } from 'react';
+**Q: How do you test a custom React hook?**
+A: I create a test component that uses the hook and test the component's behavior. Alternatively, I can use `renderHook` from the React Hooks Testing Library to test the hook directly. I mock any external dependencies like API calls or timers.
 
-export const useWindowSize = () => {
-  const [size, setSize] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    height: typeof window !== 'undefined' ? window.innerHeight : 0
-  });
+**Q: What's the difference between testing a hook vs testing a component?**
+A: For components, I test the rendered output and user interactions. For hooks, I test the logic and state management. Since hooks can't be called outside components, I either wrap them in test components or use specialized testing utilities.
 
-  useEffect(() => {
-    const handleResize = () => {
-      setSize({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-    };
+**Q: How do you test async behavior in hooks?**
+A: For API calls, I mock fetch/axios and use `waitFor` to wait for async operations. For timers, I use Jest's fake timers with `jest.useFakeTimers()` and `jest.advanceTimersByTime()`. I wrap timer advances in `act()` to ensure state updates are processed.
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return size;
-};
-```
-
-```javascript
-// useWindowSize.test.js
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import { useWindowSize } from './useWindowSize';
-
-const TestComponent = () => {
-  const { width, height } = useWindowSize();
-  return (
-    <div>
-      <div data-testid="width">{width}</div>
-      <div data-testid="height">{height}</div>
-    </div>
-  );
-};
-
-describe('useWindowSize', () => {
-  beforeEach(() => {
-    // Mock window dimensions
-    Object.defineProperty(window, 'innerWidth', {
-      writable: true,
-      value: 1024
-    });
-    Object.defineProperty(window, 'innerHeight', {
-      writable: true,
-      value: 768
-    });
-  });
-
-  it('should return initial window size', () => {
-    render(<TestComponent />);
-    expect(screen.getByTestId('width')).toHaveTextContent('1024');
-    expect(screen.getByTestId('height')).toHaveTextContent('768');
-  });
-
-  it('should update on window resize', () => {
-    render(<TestComponent />);
-
-    // Simulate window resize
-    act(() => {
-      window.innerWidth = 800;
-      window.innerHeight = 600;
-      fireEvent(window, new Event('resize'));
-    });
-
-    expect(screen.getByTestId('width')).toHaveTextContent('800');
-    expect(screen.getByTestId('height')).toHaveTextContent('600');
-  });
-
-  it('should clean up event listener', () => {
-    const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
-    const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
-
-    const { unmount } = render(<TestComponent />);
-
-    expect(addEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
-
-    unmount();
-
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
-  });
-});
-```
+**Q: Should you test implementation details of hooks?**
+A: No, focus on the public API and behavior. Test what the hook returns and how it behaves, not internal implementation details like which useState calls it makes.
 
 ## Best Practices
-
-1. **Test component pattern**: Always create a test component that uses the hook
-2. **Mock external dependencies**: API calls, timers, DOM APIs
-3. **Test all states**: Loading, success, error states
-4. **Test side effects**: Event listeners, timers, API calls
-5. **Cleanup**: Test that cleanup functions work properly
-6. **Async operations**: Use `waitFor` and proper async testing
-7. **Error boundaries**: Test error scenarios
-
-## Common Testing Libraries
-
-### React Testing Library
-```javascript
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-```
-
-### Testing Library Hooks (Alternative)
-```javascript
-import { renderHook } from '@testing-library/react-hooks';
-import { useCounter } from './useCounter';
-
-describe('useCounter', () => {
-  it('should increment counter', () => {
-    const { result } = renderHook(() => useCounter());
-
-    act(() => {
-      result.current.increment();
-    });
-
-    expect(result.current.count).toBe(1);
-  });
-});
-```
-
-## Interview Tips
-- **Test component**: Create component that uses hook to test it
-- **RTL**: Use React Testing Library for component testing
+- **Test component pattern**: Most common approach for hook testing
+- **renderHook**: For direct hook testing without wrapper components
 - **Mock dependencies**: API calls, timers, DOM APIs
-- **Async testing**: Use `waitFor` for async operations
-- **Side effects**: Test event listeners, timers, cleanup
-- **Error states**: Test error scenarios and boundaries
-- **Multiple renders**: Test hook behavior across re-renders
+- **Async testing**: Use `waitFor` and `act()` for async operations
+- **Fake timers**: Use Jest fake timers for time-based hooks
+- **Context providers**: Wrap test components with necessary providers
+- **Behavior over implementation**: Test what the hook does, not how it does it</content>
+<parameter name="filePath">c:\Users\Angshuman\Desktop\MyScripts\QuickReadyInterview\QuickPrepFrontend\08-Testing\test-custom-hook-simple.md
