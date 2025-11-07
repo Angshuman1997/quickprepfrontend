@@ -1,62 +1,68 @@
-# How do you share dependencies (e.g., React) across MFEs?
+# Sharing Dependencies Across Micro Frontends
 
-## Question
-How do you share dependencies (e.g., React) across MFEs?
+## Why Share Dependencies?
 
-# How do you share dependencies (e.g., React) across MFEs?
-
-## Question
-How do you share dependencies (e.g., React) across MFEs?
-
-## Answer
-
-Sharing dependencies across micro frontends is crucial for performance optimization and bundle size reduction. Module Federation provides the `shared` configuration to handle this.
-
-## Basic Shared Dependencies
-
-### Host Application
+### Problem Without Sharing
 ```javascript
-// webpack.config.js
-const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
+// Each MFE includes React separately
+// Total bundle size: 500KB + 500KB + 500KB = 1.5MB
 
-module.exports = {
+MFE1: React (500KB) + Components (100KB) = 600KB
+MFE2: React (500KB) + Components (150KB) = 650KB
+MFE3: React (500KB) + Components (80KB) = 580KB
+```
+
+### Solution With Sharing
+```javascript
+// React loaded once, shared across MFEs
+// Total bundle size: 500KB + 100KB + 150KB + 80KB = 830KB
+
+Host: React (500KB)
+MFE1: Components (100KB)
+MFE2: Components (150KB)
+MFE3: Components (80KB)
+```
+
+## How to Share Dependencies
+
+### Basic Configuration
+```javascript
+// vite.config.js - Host App
+import { defineConfig } from 'vite'
+import federation from '@originjs/vite-plugin-federation'
+
+export default defineConfig({
   plugins: [
-    new ModuleFederationPlugin({
-      name: 'host_app',
+    federation({
+      name: 'host',
       remotes: {
-        products: 'products@http://localhost:3001/remoteEntry.js',
-        cart: 'cart@http://localhost:3002/remoteEntry.js'
+        products: 'products@http://localhost:3001/assets/remoteEntry.js'
       },
       shared: {
         react: {
-          singleton: true,
-          eager: true
+          singleton: true,  // Only one React instance
+          eager: true       // Load immediately
         },
         'react-dom': {
           singleton: true,
           eager: true
-        },
-        '@reduxjs/toolkit': {
-          singleton: true
         }
       }
     })
   ]
-};
-```
+})
 
-### Remote Application (Products)
-```javascript
-// webpack.config.js
-const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
+// vite.config.js - Remote App
+import { defineConfig } from 'vite'
+import federation from '@originjs/vite-plugin-federation'
 
-module.exports = {
+export default defineConfig({
   plugins: [
-    new ModuleFederationPlugin({
+    federation({
       name: 'products',
       filename: 'remoteEntry.js',
       exposes: {
-        './ProductList': './src/components/ProductList'
+        './ProductList': './src/ProductList'
       },
       shared: {
         react: {
@@ -66,299 +72,70 @@ module.exports = {
         'react-dom': {
           singleton: true,
           eager: true
-        },
-        '@reduxjs/toolkit': {
-          singleton: true
         }
       }
     })
   ]
-};
+})
 ```
 
-## Advanced Shared Configuration
+## Key Options
 
-### Version-Specific Sharing
+### Singleton
 ```javascript
 shared: {
   react: {
-    singleton: true,
-    eager: true,
-    requiredVersion: '^18.0.0',
-    version: '18.2.0'
-  },
-  'react-dom': {
-    singleton: true,
-    eager: true,
-    requiredVersion: '^18.0.0'
+    singleton: true  // ✅ Only one instance (recommended)
   },
   lodash: {
-    eager: false, // Load on demand
-    singleton: false // Allow multiple versions
+    singleton: false // ❌ Allow multiple versions
   }
 }
 ```
 
-### Conditional Sharing
-```javascript
-// webpack.config.js
-const isProduction = process.env.NODE_ENV === 'production';
-
-module.exports = {
-  plugins: [
-    new ModuleFederationPlugin({
-      name: 'host_app',
-      shared: {
-        react: {
-          singleton: true,
-          eager: true
-        },
-        ...(isProduction && {
-          // Only share in production
-          'react-query': {
-            singleton: true
-          }
-        })
-      }
-    })
-  ]
-};
-```
-
-## Shared Scope Management
-
-### Custom Shared Scope
-```javascript
-// webpack.config.js
-module.exports = {
-  plugins: [
-    new ModuleFederationPlugin({
-      name: 'host_app',
-      shared: {
-        react: {
-          singleton: true,
-          shareScope: 'default'
-        }
-      },
-      shareScope: 'custom-scope'
-    })
-  ]
-};
-```
-
-### Multiple Share Scopes
-```javascript
-// Different MFEs can use different scopes
-const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPlugin');
-
-// MFE 1 - Business Logic
-new ModuleFederationPlugin({
-  name: 'business_mfe',
-  shared: {
-    'business-logic': {
-      shareScope: 'business'
-    }
-  }
-});
-
-// MFE 2 - UI Components
-new ModuleFederationPlugin({
-  name: 'ui_mfe',
-  shared: {
-    'ui-library': {
-      shareScope: 'ui'
-    }
-  }
-});
-```
-
-## Runtime Shared Dependencies
-
-### Dynamic Import with Shared Modules
-```javascript
-// src/components/LazyComponent.js
-import React, { Suspense } from 'react';
-
-// Dynamic import that respects shared dependencies
-const LazyProductList = React.lazy(() =>
-  import('products/ProductList')
-);
-
-const LazyComponent = () => {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LazyProductList />
-    </Suspense>
-  );
-};
-```
-
-### Shared Utility Functions
-```javascript
-// shared-utils/src/index.js
-export const formatCurrency = (amount, currency = 'USD') => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency
-  }).format(amount);
-};
-
-export const debounce = (func, wait) => {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-};
-```
-
-```javascript
-// webpack.config.js - Shared Utils
-new ModuleFederationPlugin({
-  name: 'shared_utils',
-  filename: 'remoteEntry.js',
-  exposes: {
-    './utils': './src/index.js'
-  },
-  shared: ['lodash'] // Dependencies of shared utils
-});
-```
-
-## Bundle Analysis and Optimization
-
-### Analyzing Shared Dependencies
-```javascript
-// webpack.config.js
-const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-
-module.exports = {
-  plugins: [
-    new BundleAnalyzerPlugin({
-      analyzerMode: 'static',
-      openAnalyzer: false,
-      reportFilename: 'bundle-report.html'
-    }),
-    new ModuleFederationPlugin({
-      // ... shared config
-    })
-  ]
-};
-```
-
-### Selective Sharing Strategy
-```javascript
-// Only share large libraries
-const sharedDependencies = {
-  react: { singleton: true, eager: true },
-  'react-dom': { singleton: true, eager: true },
-  '@reduxjs/toolkit': { singleton: true },
-  'react-router-dom': { singleton: true },
-  // Don't share small utilities
-  // lodash: { singleton: true } // Too small to share
-};
-```
-
-## Error Handling and Fallbacks
-
-### Version Conflict Resolution
-```javascript
-// webpack.config.js
-module.exports = {
-  plugins: [
-    new ModuleFederationPlugin({
-      name: 'host_app',
-      shared: {
-        react: {
-          singleton: true,
-          eager: true,
-          requiredVersion: '^18.0.0',
-          version: '18.2.0'
-        }
-      }
-    })
-  ]
-};
-```
-
-### Fallback for Missing Shared Dependencies
-```javascript
-// src/bootstrap.js
-import React from 'react';
-import ReactDOM from 'react-dom';
-
-// Check if shared dependencies are available
-const initializeApp = async () => {
-  try {
-    // Try to load remote with shared dependencies
-    const { default: App } = await import('./App');
-    ReactDOM.render(<App />, document.getElementById('root'));
-  } catch (error) {
-    console.warn('Shared dependencies not available, loading standalone version');
-    // Fallback to standalone version
-    const { default: StandaloneApp } = await import('./StandaloneApp');
-    ReactDOM.render(<StandaloneApp />, document.getElementById('root'));
-  }
-};
-
-initializeApp();
-```
-
-## Performance Considerations
-
-### Eager vs Lazy Loading
+### Eager Loading
 ```javascript
 shared: {
-  // Load immediately with host
   react: {
-    eager: true, // Loads with host bundle
-    singleton: true
+    eager: true   // ✅ Load with host app immediately
   },
-  // Load when needed
   'react-query': {
-    eager: false, // Loads when first MFE needs it
-    singleton: true
+    eager: false  // ❌ Load when first MFE needs it
   }
 }
 ```
 
-### Bundle Size Monitoring
+### Version Control
 ```javascript
-// scripts/analyze-shared.js
-const fs = require('fs');
-const path = require('path');
-
-const analyzeSharedDependencies = () => {
-  const stats = JSON.parse(fs.readFileSync('./dist/stats.json', 'utf8'));
-  
-  const sharedModules = stats.modules.filter(module => 
-    module.issuer.includes('shared')
-  );
-  
-  console.log('Shared Dependencies Analysis:');
-  sharedModules.forEach(module => {
-    console.log(`${module.name}: ${module.size} bytes`);
-  });
-};
-
-analyzeSharedDependencies();
+shared: {
+  react: {
+    singleton: true,
+    requiredVersion: '^18.0.0',  // Accept compatible versions
+    version: '18.2.0'           // Preferred version
+  }
+}
 ```
 
-## Best Practices
+## Interview Questions & Answers
 
-1. **Singleton Pattern**: Use `singleton: true` for libraries that shouldn't have multiple instances
-2. **Eager Loading**: Use `eager: true` for critical dependencies loaded by the host
-3. **Version Pinning**: Specify `requiredVersion` to prevent version conflicts
-4. **Bundle Analysis**: Regularly analyze bundle sizes to optimize sharing strategy
-5. **Error Boundaries**: Implement fallbacks for shared dependency loading failures
+**Q: Why share dependencies in micro frontends?**
+**A:** "Sharing dependencies prevents duplication of libraries like React across multiple micro frontends, reducing total bundle size and improving performance."
 
-## Interview Tips
-- **Shared config**: Most important part of Module Federation setup
-- **Singleton**: Prevents multiple React instances (causes errors)
-- **Eager**: Critical dependencies load with host, others load on demand
-- **Version conflicts**: Can break MFEs, use requiredVersion
-- **Performance**: Sharing reduces bundle size but increases initial load
-- **Analysis**: Use bundle analyzer to monitor shared dependency sizes
+**Q: What does 'singleton: true' mean?**
+**A:** "It ensures only one instance of the library exists across all micro frontends. Multiple React instances can cause errors and waste memory."
+
+**Q: What's the difference between eager and lazy loading?**
+**A:** "Eager loading loads the dependency immediately with the host app. Lazy loading loads it only when the first micro frontend that needs it is loaded."
+
+**Q: How do you handle version conflicts?**
+**A:** "Use requiredVersion to specify acceptable version ranges, and ensure all micro frontends use compatible versions of shared dependencies."
+
+**Q: What happens if you don't share dependencies?**
+**A:** "Each micro frontend will bundle its own copy of libraries like React, leading to larger bundle sizes and potential version conflicts."
+
+## Summary
+- **Singleton**: One instance of libraries (React, etc.)
+- **Eager**: Load critical deps immediately
+- **Version control**: Prevent conflicts with version ranges
+- **Benefit**: Smaller bundles, better performance
+- **Risk**: Version conflicts if not managed properly

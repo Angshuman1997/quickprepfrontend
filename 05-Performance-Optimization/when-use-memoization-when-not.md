@@ -1,54 +1,97 @@
-# When to use memoization and when NOT to?
+# Simple Memoization Hook
 
-## Question
-When to use memoization and when NOT to?
-
-## Answer
-
-Memoization is a powerful optimization technique, but it's often misused. The key is understanding when the performance benefits outweigh the costs. Memoization should only be used when you have a proven performance problem that it actually solves. Here's a comprehensive guide on when to use memoization and when to avoid it.
-
-## Understanding Memoization Costs
-
-### **Memory Overhead**
-- **Storage cost:** Cached values consume memory
-- **Reference management:** More complex garbage collection
-- **Cache invalidation:** Logic to determine when to clear cache
-
-### **Computational Overhead**
-- **Cache key generation:** Computing hash/keys for cache lookup
-- **Cache lookup:** Additional operations for each access
-- **Cache maintenance:** Updating and cleaning cache
-
-### **Complexity Cost**
-- **Code complexity:** Harder to reason about and debug
-- **Stale data risks:** Potential for using outdated cached values
-- **Memory leaks:** Improper cleanup can cause memory issues
-
-## When to Use Memoization
-
-### 1. **Expensive Computations**
-
-**Use when:** A function performs heavy calculations that are called frequently with the same inputs.
-
+**Basic custom hook for expensive computations:**
 ```typescript
-// ✅ Good: Expensive calculation
-const fibonacci = useMemo(() => {
-    return calculateFibonacci(n); // Takes 1+ seconds
-}, [n]);
+import { useMemo } from 'react';
 
-// ❌ Bad: Simple calculation
-const sum = useMemo(() => a + b, [a, b]); // Faster than memoization overhead
-```
+function useExpensiveCalculation<T>(
+    computeFn: () => T,
+    dependencies: React.DependencyList
+): T {
+    return useMemo(computeFn, dependencies);
+}
 
-**Real-world example:**
-```typescript
-function DataTable({ data, filters, sortBy }) {
-    // ✅ Memoize expensive data processing
-    const processedData = useMemo(() => {
+// Usage - When to use memoization
+function DataProcessor({ data, filter, sortBy }) {
+    // ✅ Good: Memoize expensive data filtering and sorting
+    const processedData = useExpensiveCalculation(() => {
+        console.log('🔄 Processing data...'); // Only runs when dependencies change
+
         let result = [...data];
 
-        // Apply filters (expensive with large datasets)
-        result = result.filter(item => {
+        // Expensive filtering
+        if (filter) {
+            result = result.filter(item =>
+                item.name.toLowerCase().includes(filter.toLowerCase())
+            );
+        }
+
+        // Expensive sorting
+        result.sort((a, b) => {
+            if (sortBy === 'name') return a.name.localeCompare(b.name);
+            if (sortBy === 'price') return a.price - b.price;
+            return 0;
+        });
+
+        return result;
+    }, [data, filter, sortBy]); // Only recompute when these change
+
+    return (
+        <div>
+            <h3>Processed {processedData.length} items</h3>
+            {processedData.map(item => (
+                <div key={item.id}>
+                    {item.name} - ${item.price}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// Usage - When NOT to use memoization
+function SimpleCalculator({ a, b }) {
+    // ❌ Bad: Simple arithmetic doesn't need memoization
+    // const sum = useMemo(() => a + b, [a, b]);
+
+    // ✅ Better: Just compute directly
+    const sum = a + b;
+
+    return <div>Sum: {sum}</div>;
+}
+
+function UserCard({ user }) {
+    // ❌ Bad: Simple object creation
+    // const displayName = useMemo(() => `${user.firstName} ${user.lastName}`, [user]);
+
+    // ✅ Better: Compute inline
+    const displayName = `${user.firstName} ${user.lastName}`;
+
+    return (
+        <div className="user-card">
+            <h3>{displayName}</h3>
+            <p>{user.email}</p>
+        </div>
+    );
+}
+```
+
+**When to use:**
+- ✅ Expensive computations (> 1ms)
+- ✅ Complex data transformations
+- ✅ API response processing
+- ✅ Heavy calculations in loops
+
+**When NOT to use:**
+- ❌ Simple arithmetic (`a + b`)
+- ❌ String concatenation (`${first} ${last}`)
+- ❌ Primitive values
+- ❌ One-time computations
+
+**Key Benefits:**
+- **Prevents unnecessary re-computation** - Only runs when dependencies change
+- **Improves performance** - Skips expensive operations on re-renders
+- **Stable references** - Same input = same output
+- **Easy to implement** - Just wrap expensive code in useMemo
             return Object.entries(filters).every(([key, value]) => {
                 return item[key].toLowerCase().includes(value.toLowerCase());
             });
