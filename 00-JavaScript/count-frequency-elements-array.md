@@ -1,34 +1,42 @@
-# Write code to count the frequency of elements in an array
+# Count Element Frequency in Array
 
-## Question
-Write code to count the frequency of elements in an array.
-
-## Answer
-
-Counting the frequency of elements in an array is a common programming task. There are several approaches, each with different performance characteristics and use cases.
-
-## 1. **Using a Regular Object (Most Common Approach)**
-
+## Simple Solution
 ```javascript
 function countFrequency(arr) {
-    const frequency = {};
-
-    for (let i = 0; i < arr.length; i++) {
-        const element = arr[i];
-        if (frequency[element]) {
-            frequency[element]++;
-        } else {
-            frequency[element] = 1;
-        }
-    }
-
-    return frequency;
+  const frequency = {};
+  
+  for (let item of arr) {
+    frequency[item] = (frequency[item] || 0) + 1;
+  }
+  
+  return frequency;
 }
 
 // Example
-const numbers = [1, 2, 2, 3, 3, 3, 4, 4, 4, 4];
-console.log(countFrequency(numbers));
-// { '1': 1, '2': 2, '3': 3, '4': 4 }
+const arr = [1, 2, 2, 3, 3, 3];
+console.log(countFrequency(arr)); // { '1': 1, '2': 2, '3': 3 }
+```
+
+## Using reduce()
+```javascript
+function countFrequency(arr) {
+  return arr.reduce((freq, item) => {
+    freq[item] = (freq[item] || 0) + 1;
+    return freq;
+  }, {});
+}
+```
+
+## Interview Q&A
+
+**Q: How do you count frequency of elements in an array?**  
+**A:** Use an object to store counts. Loop through array, increment count for each element.
+
+**Q: What's the most efficient way?**  
+**A:** Using a regular object with a for loop is usually fastest and most readable.
+
+**Q: Can you use reduce for this?**  
+**A:** Yes, reduce can accumulate frequencies in an object as the accumulator.
 ```
 
 ### **Using Object Property Access Shorthand:**

@@ -1,34 +1,39 @@
-# Difference between inline, block, and inline-block elements
-
-## Question
-What's the difference between inline, block, and inline-block elements?
-
-## Answer
-
-The `display` property controls how elements are laid out and how they interact with other elements.
+# inline vs block vs inline-block
 
 ## Block Elements
+- Take full width
+- Start on new line
+- Can set width/height
+- Examples: `<div>`, `<p>`, `<h1>`
 
-### Characteristics
-- Take up **full width** available (stretch horizontally)
-- Start on a **new line** and push next element to new line
-- **Respect all box model properties** (width, height, margin, padding)
-- Can **contain other block and inline elements**
+## Inline Elements
+- Only take needed width
+- Stay on same line
+- Can't set width/height
+- Examples: `<span>`, `<a>`, `<strong>`
 
-### Examples
-```css
-/* Default block elements */
-div, p, h1-h6, ul, li, section, article, header, footer, main, nav
+## Inline-Block Elements
+- Stay on same line
+- Can set width/height
+- Like inline but with block properties
+
+## Example
+```html
+<div style="display: block; width: 200px;">Block</div>
+<span style="display: inline; width: 200px;">Inline</span>
+<div style="display: inline-block; width: 200px;">Inline-block</div>
 ```
 
-### CSS Example
-```css
-.block {
-  display: block;
-  width: 300px;      /* ✅ Works */
-  height: 100px;     /* ✅ Works */
-  margin: 20px;      /* ✅ All sides work */
-  padding: 15px;     /* ✅ All sides work */
+## Interview Q&A
+
+**Q: What's the difference between inline and block?**  
+**A:** Block elements take full width and start new lines. Inline elements only take needed width and stay inline.
+
+**Q: When would you use inline-block?**  
+**A:** When you want elements to stay on the same line but still be able to set width and height.
+
+**Q: Can you set width on inline elements?**  
+**A:** No, inline elements ignore width and height properties.
   background: lightblue;
 }
 ```

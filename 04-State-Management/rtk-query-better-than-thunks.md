@@ -1,83 +1,90 @@
-# What is RTK Query? When is it better than Thunks?
+# RTK Query vs Thunks
 
 ## Question
-What is RTK Query? When is it better than Thunks?
+When is RTK Query better than thunks?
 
 ## Answer
+RTK Query for managing API data with automatic caching. Thunks for custom async logic that doesn't fit the standard pattern.
 
-RTK Query is a powerful data fetching and caching library built on top of Redux Toolkit. It provides a declarative way to manage server state, with automatic caching, background refetching, and optimistic updates. While thunks are great for one-off async logic, RTK Query excels at managing API interactions and server state.
-
-## What is RTK Query?
-
-RTK Query is a data fetching and state management library that:
-
-- **Automatically manages server state** in Redux
-- **Provides caching and background updates**
-- **Generates React hooks** for data fetching
-- **Handles loading/error states** automatically
-- **Supports optimistic updates** and cache invalidation
-- **Integrates seamlessly** with Redux Toolkit
-
-## RTK Query vs Thunks Comparison
-
-### 1. **Basic Data Fetching**
-
-**With Thunks:**
-```typescript
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-
-export const fetchUsers = createAsyncThunk(
-    'users/fetchUsers',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await fetch('/api/users');
-            if (!response.ok) throw new Error('Failed to fetch');
-            return await response.json();
-        } catch (error) {
-            return rejectWithValue(error.message);
-        }
-    }
-);
-
-const usersSlice = createSlice({
-    name: 'users',
-    initialState: { users: [], loading: false, error: null },
-    reducers: {},
-    extraReducers: (builder) => {
-        builder
-            .addCase(fetchUsers.pending, (state) => {
-                state.loading = true;
-            })
-            .addCase(fetchUsers.fulfilled, (state, action) => {
-                state.loading = false;
-                state.users = action.payload;
-            })
-            .addCase(fetchUsers.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            });
-    }
+## RTK Query Example
+```javascript
+const api = createApi({
+  baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
+  endpoints: (builder) => ({
+    getUsers: builder.query({
+      query: () => 'users',
+    }),
+  }),
 });
 
-// Component usage
+const { useGetUsersQuery } = api;
+
 function UsersList() {
-    const dispatch = useDispatch();
-    const { users, loading, error } = useSelector(state => state.users);
-
-    useEffect(() => {
-        dispatch(fetchUsers());
-    }, [dispatch]);
-
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
-
-    return (
-        <ul>
-            {users.map(user => <li key={user.id}>{user.name}</li>)}
-        </ul>
-    );
+  const { data, isLoading, error } = useGetUsersQuery();
+  // Automatic caching, loading, error handling!
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error</div>;
+  return <ul>{data?.map(user => <li key={user.id}>{user.name}</li>)}</ul>;
 }
 ```
+
+## Thunks Example
+```javascript
+const fetchUsers = createAsyncThunk(
+  'users/fetch',
+  async () => {
+    const response = await fetch('/api/users');
+    return response.json();
+  }
+);
+
+// Manual state management in slice
+const usersSlice = createSlice({
+  initialState: { data: [], loading: false, error: null },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUsers.pending, (state) => { state.loading = true; })
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      });
+  }
+});
+```
+
+## When to Use RTK Query
+
+✅ **Standard API data fetching**  
+✅ **Automatic caching needed**  
+✅ **Background refetching**  
+✅ **CRUD operations**  
+✅ **Less boilerplate wanted**  
+
+## When to Use Thunks
+
+✅ **Custom async workflows**  
+✅ **Complex business logic**  
+✅ **File uploads/downloads**  
+✅ **Manual control over state**  
+✅ **Non-standard API patterns**  
+
+## Interview Q&A
+
+**Q: What's RTK Query?**
+
+A: Data fetching library that handles API calls, caching, and state management automatically. Part of Redux Toolkit.
+
+**Q: When to use RTK Query vs createAsyncThunk?**
+
+A: RTK Query for managing server data with automatic caching and background updates. Thunks for custom async operations.
+
+**Q: Main benefit of RTK Query?**
+
+A: Much less boilerplate - automatic loading states, caching, error handling, and background refetching.
 
 **With RTK Query:**
 ```typescript

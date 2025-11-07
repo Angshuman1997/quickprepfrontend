@@ -1,58 +1,38 @@
-# What is hoisting? How do var, let, and const differ during hoisting?
+# What is Hoisting?
 
-## Question
-What is hoisting? How do var, let, and const differ during hoisting?
+## Simple Answer
+Hoisting moves variable and function declarations to the top of their scope before code runs.
 
-## Answer
+## var vs let/const
 
-**Hoisting** is JavaScript's behavior of moving variable and function declarations to the top of their containing scope during the compilation phase, before code execution.
-
-### How it works:
-
-**1. var - Hoisted and initialized with undefined:**
+**var - Hoisted and initialized as undefined:**
 ```javascript
-console.log(x); // undefined (not error!)
+console.log(x); // undefined
 var x = 5;
-console.log(x); // 5
-
-// Internally treated as:
-// var x = undefined;
-// console.log(x);
-// x = 5;
 ```
 
-**2. let and const - Hoisted but NOT initialized (Temporal Dead Zone):**
+**let/const - Hoisted but NOT initialized (Temporal Dead Zone):**
 ```javascript
-console.log(y); // ReferenceError: Cannot access 'y' before initialization
-let y = 10;
-
-console.log(z); // ReferenceError: Cannot access 'z' before initialization  
-const z = 20;
+console.log(y); // ReferenceError
+let y = 5;
 ```
 
-### Key Differences Table:
-
-| Feature | var | let | const |
-|---------|-----|-----|-------|
-| Hoisted? | ✅ Yes | ✅ Yes | ✅ Yes |
-| Initialized during hoisting? | ✅ Yes (undefined) | ❌ No | ❌ No |
-| Temporal Dead Zone? | ❌ No | ✅ Yes | ✅ Yes |
-| Can access before declaration? | ✅ Yes (undefined) | ❌ No (ReferenceError) | ❌ No (ReferenceError) |
-
-### Function Hoisting Example:
+## Function Hoisting
 ```javascript
-sayHello(); // "Hello!" - works because function declarations are fully hoisted
+sayHello(); // Works!
 
 function sayHello() {
-    console.log("Hello!");
+  console.log("Hello!");
 }
-
-// But function expressions behave like variables:
-sayBye(); // TypeError: sayBye is not a function
-var sayBye = function() {
-    console.log("Bye!");
-};
 ```
 
-### Interview Tip:
-*"Hoisting helps avoid reference errors for functions, but with let/const, we get safer code by preventing accidental usage before initialization through the Temporal Dead Zone."*
+## Interview Q&A
+
+**Q: What is hoisting?**  
+**A:** Hoisting moves declarations to the top. var variables become undefined, let/const cause ReferenceError if accessed early.
+
+**Q: What's the Temporal Dead Zone?**  
+**A:** The time between hoisting and initialization where let/const variables can't be accessed.
+
+**Q: Why is let/const safer than var?**  
+**A:** They prevent accidental use of undefined variables and catch bugs early.

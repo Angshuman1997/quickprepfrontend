@@ -1,34 +1,76 @@
-# Common string manipulation methods and techniques
+# String Methods
 
-## Question
-Common string manipulation methods and techniques
+## Basic Methods
 
-## Answer
-
-JavaScript provides a comprehensive set of built-in string methods for manipulation, searching, and transformation. Strings are immutable in JavaScript, so all methods return new strings rather than modifying the original.
-
-## 1. **Basic String Properties and Methods**
-
-### **length** - Get string length
+**length** - Get string length:
 ```javascript
-const str = "Hello World";
-console.log(str.length); // 11
+"Hello".length; // 5
 ```
 
-### **charAt()** - Get character at specific index
+**charAt()** - Get character at index:
 ```javascript
-const str = "Hello";
-console.log(str.charAt(0)); // "H"
-console.log(str.charAt(4)); // "o"
-console.log(str.charAt(10)); // "" (empty string for out of bounds)
+"Hello".charAt(0); // "H"
 ```
 
-### **charCodeAt()** - Get Unicode value of character
+**substring()** - Extract part of string:
 ```javascript
-const str = "Hello";
-console.log(str.charCodeAt(0)); // 72 (Unicode for 'H')
-console.log(str.charCodeAt(1)); // 101 (Unicode for 'e')
+"Hello World".substring(0, 5); // "Hello"
 ```
+
+**split()** - Split into array:
+```javascript
+"hello,world".split(","); // ["hello", "world"]
+```
+
+## Search Methods
+
+**indexOf()** - Find position:
+```javascript
+"Hello World".indexOf("World"); // 6
+```
+
+**includes()** - Check if contains:
+```javascript
+"Hello World".includes("World"); // true
+```
+
+**startsWith()** - Check start:
+```javascript
+"Hello World".startsWith("Hello"); // true
+```
+
+## Transform Methods
+
+**toUpperCase()** - Convert to uppercase:
+```javascript
+"hello".toUpperCase(); // "HELLO"
+```
+
+**toLowerCase()** - Convert to lowercase:
+```javascript
+"HELLO".toLowerCase(); // "hello"
+```
+
+**replace()** - Replace text:
+```javascript
+"Hello World".replace("World", "Universe"); // "Hello Universe"
+```
+
+**trim()** - Remove whitespace:
+```javascript
+"  hello  ".trim(); // "hello"
+```
+
+## Interview Q&A
+
+**Q: How do you check if a string contains a substring?**  
+**A:** Use includes() method: str.includes("substring")
+
+**Q: How do you convert a string to uppercase?**  
+**A:** Use toUpperCase(): str.toUpperCase()
+
+**Q: How do you split a string into an array?**  
+**A:** Use split(): str.split(",") for comma-separated values.
 
 ### **String.fromCharCode()** - Create string from Unicode values
 ```javascript

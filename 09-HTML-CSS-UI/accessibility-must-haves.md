@@ -1,33 +1,66 @@
-# Accessibility must-haves (aria, labels, focus control)
+# Accessibility Essentials
 
-## Question
-Accessibility must-haves (aria, labels, focus control).
+## Basic Rules
 
-# Accessibility must-haves (aria, labels, focus control)
-
-## Question
-Accessibility must-haves (aria, labels, focus control).
-
-## Answer
-
-Accessibility (a11y) ensures that web applications are usable by people with disabilities. Here are the essential accessibility practices every developer should know.
-
-## Semantic HTML
-
-### Proper Heading Hierarchy
+**1. Use semantic HTML**
 ```html
-<!-- Good: Proper heading hierarchy -->
-<h1>Main Page Title</h1>
-<section>
-  <h2>Section Title</h2>
-  <p>Content...</p>
-  <h3>Subsection Title</h3>
-  <p>More content...</p>
-</section>
+<!-- Good -->
+<button>Click me</button>
+<nav>...</nav>
+<main>...</main>
 
-<!-- Bad: Skipping heading levels -->
-<h1>Main Title</h1>
-<h3>Section Title</h3> <!-- Skips h2 -->
+<!-- Bad -->
+<div onclick="...">Click me</div>
+<div class="nav">...</div>
+```
+
+**2. Add alt text to images**
+```html
+<!-- Good -->
+<img src="cat.jpg" alt="Orange cat sleeping on couch">
+
+<!-- Bad -->
+<img src="cat.jpg">
+```
+
+**3. Labels for form inputs**
+```html
+<!-- Good -->
+<label for="email">Email:</label>
+<input id="email" type="email">
+
+<!-- Bad -->
+<input type="email" placeholder="Email">
+```
+
+**4. ARIA when needed**
+```html
+<!-- For custom components -->
+<button aria-expanded="false" aria-controls="menu">
+  Menu
+</button>
+<div id="menu" hidden>...</div>
+```
+
+**5. Focus management**
+```javascript
+// Focus important elements
+modal.focus();
+
+// Trap focus in modals
+// Handle Tab key to stay within modal
+```
+
+## Interview Q&A
+
+**Q: What's the most important accessibility rule?**  
+**A:** Use semantic HTML. Screen readers rely on proper heading hierarchy and semantic elements.
+
+**Q: Why add alt text to images?**  
+**A:** Screen readers can't see images. Alt text describes what the image shows.
+
+**Q: When do you use ARIA?**  
+**A:** For custom UI components that don't have semantic equivalents. But prefer semantic HTML first.
 ```
 
 ### Semantic Elements

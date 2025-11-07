@@ -1,53 +1,81 @@
-# How to handle async API calls using createAsyncThunk?
+# How to use createAsyncThunk for API calls?
 
 ## Question
-How to handle async API calls using createAsyncThunk?
+How to use createAsyncThunk for API calls?
 
 ## Answer
-
-`createAsyncThunk` is a Redux Toolkit utility that simplifies handling async operations in Redux. It automatically generates action creators and action types for pending, fulfilled, and rejected states, making async logic more predictable and easier to test.
+createAsyncThunk automatically creates actions for async operations. It generates pending, fulfilled, and rejected actions.
 
 ## Basic Usage
-
-### 1. **Creating an Async Thunk**
-
-```typescript
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-
-// Define the async thunk
-export const fetchUsers = createAsyncThunk(
-    'users/fetchUsers', // Action type prefix
-    async (params: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
-        try {
-            const response = await fetch(`/api/users?page=${params.page}&limit=${params.limit}`);
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch users');
-            }
-
-            const data = await response.json();
-            return data; // This becomes action.payload in fulfilled case
-        } catch (error) {
-            // Use rejectWithValue to return a custom error payload
-            return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
-        }
-    }
+```javascript
+// Create async thunk
+const fetchUsers = createAsyncThunk(
+  'users/fetchUsers',
+  async () => {
+    const response = await fetch('/api/users');
+    if (!response.ok) throw new Error('Failed to fetch');
+    return response.json(); // This becomes the payload
+  }
 );
 ```
 
-### 2. **Creating the Slice**
+## In Slice
+```javascript
+const usersSlice = createSlice({
+  name: 'users',
+  initialState: { data: [], loading: false, error: null },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUsers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      });
+  }
+});
+```
 
-```typescript
-interface UsersState {
-    data: User[];
-    loading: boolean;
-    error: string | null;
-    pagination: {
-        page: number;
-        total: number;
-        hasMore: boolean;
-    } | null;
+## In Component
+```javascript
+function UsersList() {
+  const dispatch = useDispatch();
+  const { data, loading, error } = useSelector(state => state.users);
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <ul>
+      {data.map(user => <li key={user.id}>{user.name}</li>)}
+    </ul>
+  );
 }
+```
+
+## Interview Q&A
+
+**Q: What does createAsyncThunk do?**
+
+A: Creates three actions automatically: pending (started), fulfilled (success), rejected (error) for async operations.
+
+**Q: How do you handle errors in createAsyncThunk?**
+
+A: Throw error in async function, then handle in rejected case in extraReducers.
+
+**Q: What's the benefit over manual action creators?**
+
+A: Less boilerplate code, consistent patterns, automatic action type generation.
 
 const initialState: UsersState = {
     data: [],

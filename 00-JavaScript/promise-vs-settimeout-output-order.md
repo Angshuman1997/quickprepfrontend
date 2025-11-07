@@ -1,13 +1,9 @@
-# What will be the output order in this case: Promise vs setTimeout?
+# Promise vs setTimeout Output Order
 
-## Question
-What will be the output order in this case: Promise vs setTimeout?
+## Simple Answer
+Promises execute before setTimeout, even with 0 delay.
 
-## Answer
-
-**Promises always execute before setTimeout**, even with setTimeout delay of 0, because Promises use the microtask queue which has higher priority.
-
-### Example 1 - Basic Comparison:
+## Example
 ```javascript
 console.log('1');
 
@@ -20,14 +16,21 @@ console.log('4');
 // Output:
 // 1
 // 4
-// 3 (Promise - microtask)
-// 2 (setTimeout - macrotask)
+// 3  ← Promise runs first (microtask)
+// 2  ← setTimeout runs after (macrotask)
 ```
 
-### Example 2 - Multiple Promises and Timeouts:
-```javascript
-setTimeout(() => console.log('timeout1'), 0);
-setTimeout(() => console.log('timeout2'), 0);
+## Why?
+- **Promises**: Microtask queue (higher priority)
+- **setTimeout**: Macrotask queue (lower priority)
+
+## Interview Q&A
+
+**Q: Which executes first: Promise or setTimeout?**  
+**A:** Promise always executes before setTimeout, even with 0 delay.
+
+**Q: Why does this happen?**  
+**A:** Promises use microtask queue, setTimeout uses macrotask queue. Microtasks run before macrotasks.
 
 Promise.resolve().then(() => console.log('promise1'));
 Promise.resolve().then(() => console.log('promise2'));

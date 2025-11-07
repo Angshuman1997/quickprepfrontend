@@ -1,34 +1,61 @@
-# Common array manipulation methods and techniques
+# Array Methods
 
-## Question
-Common array manipulation methods and techniques
+## Adding/Removing
 
-## Answer
-
-JavaScript provides a rich set of built-in methods for array manipulation, along with various techniques for common operations. Arrays are mutable objects, and these methods help perform operations efficiently.
-
-## 1. **Adding/Removing Elements**
-
-### **push()** - Add to end
+**push()** - Add to end:
 ```javascript
-const fruits = ['apple', 'banana'];
-fruits.push('orange'); // Returns new length: 3
-console.log(fruits); // ['apple', 'banana', 'orange']
+const arr = [1, 2];
+arr.push(3); // [1, 2, 3]
 ```
 
-### **pop()** - Remove from end
+**pop()** - Remove from end:
 ```javascript
-const fruits = ['apple', 'banana', 'orange'];
-const removed = fruits.pop(); // Returns removed element: 'orange'
-console.log(fruits); // ['apple', 'banana']
+const arr = [1, 2, 3];
+arr.pop(); // [1, 2], returns 3
 ```
 
-### **unshift()** - Add to beginning
+**unshift()** - Add to beginning:
 ```javascript
-const fruits = ['banana', 'orange'];
-fruits.unshift('apple'); // Returns new length: 3
-console.log(fruits); // ['apple', 'banana', 'orange']
+const arr = [2, 3];
+arr.unshift(1); // [1, 2, 3]
 ```
+
+**shift()** - Remove from beginning:
+```javascript
+const arr = [1, 2, 3];
+arr.shift(); // [2, 3], returns 1
+```
+
+## Transforming
+
+**map()** - Transform each element:
+```javascript
+const numbers = [1, 2, 3];
+const doubled = numbers.map(n => n * 2); // [2, 4, 6]
+```
+
+**filter()** - Keep elements that match:
+```javascript
+const numbers = [1, 2, 3, 4];
+const evens = numbers.filter(n => n % 2 === 0); // [2, 4]
+```
+
+**reduce()** - Combine to single value:
+```javascript
+const numbers = [1, 2, 3, 4];
+const sum = numbers.reduce((total, n) => total + n, 0); // 10
+```
+
+## Interview Q&A
+
+**Q: What's the difference between map and forEach?**  
+**A:** map returns a new array, forEach doesn't return anything.
+
+**Q: How do you remove an element from an array?**  
+**A:** splice(index, 1) to remove at index, or filter to create new array without element.
+
+**Q: What's the difference between slice and splice?**  
+**A:** slice returns portion without modifying original, splice modifies original array.
 
 ### **shift()** - Remove from beginning
 ```javascript

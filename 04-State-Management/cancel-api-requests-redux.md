@@ -4,51 +4,63 @@
 How to cancel API requests in Redux?
 
 ## Answer
+Use AbortController to cancel requests when component unmounts or user navigates away. This prevents state updates on unmounted components.
 
-Cancelling API requests in Redux is crucial for preventing state updates on unmounted components, avoiding race conditions, and improving user experience. Redux Toolkit's `createAsyncThunk` provides built-in cancellation support, while manual approaches offer more control.
-
-## Using createAsyncThunk with Cancellation
-
-### 1. **Basic Cancellation with AbortController**
-
-```typescript
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-
-export const fetchUsers = createAsyncThunk(
-    'users/fetchUsers',
-    async (_, { signal }) => {
-        // signal is an AbortSignal from AbortController
-        const response = await fetch('/api/users', { signal });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch users');
-        }
-
-        const data = await response.json();
-        return data;
-    }
+## With createAsyncThunk
+```javascript
+const fetchUsers = createAsyncThunk(
+  'users/fetchUsers',
+  async (_, { signal }) => {
+    const response = await fetch('/api/users', { signal });
+    if (!response.ok) throw new Error('Failed');
+    return response.json();
+  }
 );
+```
 
-const usersSlice = createSlice({
-    name: 'users',
-    initialState: {
-        data: [],
-        loading: false,
-        error: null,
-    },
-    reducers: {},
-    extraReducers: (builder) => {
-        builder
-            .addCase(fetchUsers.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchUsers.fulfilled, (state, action) => {
-                state.loading = false;
-                state.data = action.payload;
-            })
-            .addCase(fetchUsers.rejected, (state, action) => {
-                state.loading = false;
+## In Component
+```javascript
+function UsersList() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const promise = dispatch(fetchUsers());
+
+    return () => {
+      promise.abort(); // Cancel when component unmounts
+    };
+  }, [dispatch]);
+
+  return <div>Users list...</div>;
+}
+```
+
+## Why Cancel Requests?
+
+**Problems without cancellation:**
+- Component unmounts but request completes later
+- State update on unmounted component causes memory leaks
+- Race conditions when user clicks quickly
+
+**Benefits:**
+- Prevents memory leaks
+- Avoids unnecessary state updates
+- Better performance
+- Cleaner user experience
+
+## Interview Q&A
+
+**Q: Why cancel API requests in Redux?**
+
+A: Prevents state updates on unmounted components and avoids memory leaks. When user navigates away quickly, cancelled requests don't update state.
+
+**Q: How do you cancel requests in Redux Toolkit?**
+
+A: Use AbortController signal in createAsyncThunk. Pass signal to fetch, and call abort() in component cleanup function.
+
+**Q: What's AbortController?**
+
+A: Browser API to cancel fetch requests. Create controller, pass signal to fetch, call abort() to cancel the request.
                 // Check if the rejection was due to cancellation
                 if (action.error.name === 'AbortError') {
                     // Don't update error state for cancelled requests

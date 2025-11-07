@@ -1,86 +1,66 @@
-# What are Axios interceptors and how to use them?
+# What are Axios interceptors?
 
 ## Question
-What are Axios interceptors and how to use them?
+What are Axios interceptors?
 
 ## Answer
+Functions that run before requests or after responses to modify them globally.
 
-Axios interceptors are functions that Axios runs before a request is sent or after a response is received. They allow you to intercept and modify HTTP requests and responses globally, making them perfect for cross-cutting concerns like authentication, logging, error handling, and data transformation.
+## Basic Example
+```javascript
+import axios from 'axios';
 
-## Types of Interceptors
-
-### 1. **Request Interceptors**
-Run before the request is sent to the server. Used for:
-- Adding authentication headers
-- Setting request timeouts
-- Logging requests
-- Modifying request data
-
-### 2. **Response Interceptors**
-Run after receiving a response from the server. Used for:
-- Handling common errors
-- Transforming response data
-- Logging responses
-- Refreshing authentication tokens
-
-## Basic Usage
-
-### 1. **Setting Up Axios Instance**
-
-```typescript
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-
-// Create a configured Axios instance
-const apiClient: AxiosInstance = axios.create({
-    baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api',
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+const api = axios.create({
+  baseURL: '/api'
 });
 
-export default apiClient;
-```
-
-### 2. **Request Interceptor**
-
-```typescript
-// Request interceptor
-apiClient.interceptors.request.use(
-    (config: AxiosRequestConfig): AxiosRequestConfig => {
-        // Add authorization header
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            config.headers = {
-                ...config.headers,
-                Authorization: `Bearer ${token}`,
-            };
-        }
-
-        // Add request timestamp
-        config.headers = {
-            ...config.headers,
-            'X-Request-Time': new Date().toISOString(),
-        };
-
-        // Log outgoing requests in development
-        if (process.env.NODE_ENV === 'development') {
-            console.log('🚀 Request:', {
-                method: config.method?.toUpperCase(),
-                url: config.url,
-                data: config.data,
-            });
-        }
-
-        return config;
-    },
-    (error) => {
-        // Handle request errors (network issues, etc.)
-        console.error('Request Error:', error);
-        return Promise.reject(error);
+// Request interceptor - add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
+
+// Response interceptor - handle errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Redirect to login
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
 ```
+
+## Usage
+```javascript
+// All requests now automatically include auth token
+const getData = () => api.get('/data');
+const postData = (data) => api.post('/data', data);
+```
+
+## Interview Q&A
+
+**Q: What are Axios interceptors?**
+
+A: Functions that automatically modify requests before sending or responses after receiving.
+
+**Q: When do you use request interceptors?**
+
+A: To add authentication headers, logging, or modify request data globally.
+
+**Q: When do you use response interceptors?**
+
+A: To handle errors, transform response data, or refresh tokens on 401 errors.
 
 ### 3. **Response Interceptor**
 

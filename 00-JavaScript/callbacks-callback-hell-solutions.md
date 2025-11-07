@@ -1,34 +1,69 @@
-# What are callbacks and callback hell? How do you solve callback hell?
+# Callbacks and Callback Hell
 
-## Question
-What are callbacks and callback hell? How do you solve callback hell?
+## What are Callbacks?
+Functions passed as arguments to other functions, called when async operation completes.
 
-## Answer
-
-**Callbacks** are functions passed as arguments to other functions, executed when an asynchronous operation completes.
-
-### Basic Callback Example:
 ```javascript
 function fetchData(callback) {
-    setTimeout(() => {
-        const data = { name: "John", age: 30 };
-        callback(data); // Execute callback with data
-    }, 1000);
+  setTimeout(() => {
+    const data = { name: "John" };
+    callback(data);
+  }, 1000);
 }
 
-// Using the callback
 fetchData((user) => {
-    console.log("User:", user); // { name: "John", age: 30 }
+  console.log(user); // { name: "John" }
 });
 ```
 
-## What is Callback Hell?
+## Callback Hell
+Too many nested callbacks make code hard to read.
 
-**Callback hell** (also called "pyramid of doom") occurs when multiple nested callbacks create deeply indented, hard-to-read code.
-
-### Callback Hell Example:
 ```javascript
-// ❌ Callback Hell - Hard to read and maintain
+// ❌ Bad - Callback Hell
+getUser(userId, (user) => {
+  getPosts(user.id, (posts) => {
+    getComments(posts[0].id, (comments) => {
+      // Deep nesting, hard to read
+    });
+  });
+});
+```
+
+## Solutions
+
+**Promises:**
+```javascript
+// ✅ Better - Promises
+getUser(userId)
+  .then(user => getPosts(user.id))
+  .then(posts => getComments(posts[0].id))
+  .then(comments => {
+    // Much cleaner!
+  });
+```
+
+**async/await:**
+```javascript
+// ✅ Best - async/await
+async function loadData(userId) {
+  const user = await getUser(userId);
+  const posts = await getPosts(user.id);
+  const comments = await getComments(posts[0].id);
+  // Clean and readable!
+}
+```
+
+## Interview Q&A
+
+**Q: What is callback hell?**  
+**A:** When you have many nested callbacks, making code hard to read and maintain.
+
+**Q: How do you solve callback hell?**  
+**A:** Use Promises with .then() chaining, or async/await syntax.
+
+**Q: What's the difference between callbacks and Promises?**  
+**A:** Callbacks are functions passed to async functions. Promises represent future values and avoid nesting.
 getUser(userId, (user) => {
     console.log("User:", user);
     getUserPosts(user.id, (posts) => {

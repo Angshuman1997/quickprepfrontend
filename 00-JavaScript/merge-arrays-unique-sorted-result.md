@@ -1,33 +1,41 @@
-# Write code to merge two arrays and return unique, sorted result.
+# Merge Arrays: Unique & Sorted
 
-## Question
-Write code to merge two arrays and return unique, sorted result.
-
-## Answer
-
-Merging arrays while ensuring uniqueness and sorting is a common operation. There are several approaches, each with different performance characteristics and use cases.
-
-## 1. **Using Set for Uniqueness, then Sort**
-
+## Simple Solution
 ```javascript
 function mergeUniqueSorted(arr1, arr2) {
-    // Combine arrays and use Set to remove duplicates
-    const combined = [...arr1, ...arr2];
-    const uniqueSet = new Set(combined);
-
-    // Convert back to array and sort
-    return Array.from(uniqueSet).sort((a, b) => {
-        // Handle different data types
-        if (typeof a === 'number' && typeof b === 'number') {
-            return a - b;
-        }
-        return String(a).localeCompare(String(b));
-    });
+  // Combine arrays
+  const combined = [...arr1, ...arr2];
+  
+  // Remove duplicates with Set, then sort
+  return [...new Set(combined)].sort((a, b) => a - b);
 }
 
-// Examples
+// Example
 const arr1 = [3, 1, 4, 1, 5];
 const arr2 = [9, 2, 6, 5, 3];
+console.log(mergeUniqueSorted(arr1, arr2)); // [1, 2, 3, 4, 5, 6, 9]
+```
+
+## Alternative: Using filter
+```javascript
+function mergeUniqueSorted(arr1, arr2) {
+  const combined = arr1.concat(arr2);
+  return combined
+    .filter((item, index) => combined.indexOf(item) === index)
+    .sort((a, b) => a - b);
+}
+```
+
+## Interview Q&A
+
+**Q: How do you merge two arrays and remove duplicates?**  
+**A:** Use spread operator to combine, then Set to remove duplicates: `[...new Set([...arr1, ...arr2])]`
+
+**Q: How do you sort the result?**  
+**A:** Call .sort() on the array. For numbers: .sort((a, b) => a - b)
+
+**Q: What's the most efficient way?**  
+**A:** Using Set is usually fastest for large arrays since it handles uniqueness during creation.
 
 console.log(mergeUniqueSorted(arr1, arr2));
 // [1, 2, 3, 4, 5, 6, 9]

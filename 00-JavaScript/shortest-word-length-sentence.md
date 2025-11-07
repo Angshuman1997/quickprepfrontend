@@ -1,32 +1,42 @@
-# Write code to return the shortest word length in a sentence
+# Find Shortest Word Length
 
-## Question
-Write code to return the shortest word length in a sentence.
-
-## Answer
-
-Finding the shortest word length in a sentence involves splitting the sentence into words and finding the minimum word length. This is a common algorithmic problem with several approaches.
-
-## 1. **Using split() and Math.min()**
-
+## Simple Solution
 ```javascript
 function findShortestWordLength(sentence) {
-    if (!sentence || sentence.trim() === '') return 0;
-
-    // Split sentence into words and find minimum length
-    const words = sentence.trim().split(/\s+/);
-    return Math.min(...words.map(word => word.length));
+  const words = sentence.split(' ');
+  let shortest = Infinity;
+  
+  for (let word of words) {
+    if (word.length < shortest) {
+      shortest = word.length;
+    }
+  }
+  
+  return shortest;
 }
 
-// Examples
-const sentence1 = "The quick brown fox jumps over the lazy dog";
-console.log(findShortestWordLength(sentence1)); // 3 ("The", "fox", "dog" are 3 chars)
+// Example
+console.log(findShortestWordLength("The quick brown fox")); // 3
+```
 
-const sentence2 = "I love programming";
-console.log(findShortestWordLength(sentence2)); // 1 ("I")
+## Using Math.min()
+```javascript
+function findShortestWordLength(sentence) {
+  const words = sentence.split(' ');
+  return Math.min(...words.map(word => word.length));
+}
+```
 
-const sentence3 = "Supercalifragilisticexpialidocious is a long word";
-console.log(findShortestWordLength(sentence3)); // 2 ("is", "a")
+## Interview Q&A
+
+**Q: How do you find the shortest word in a sentence?**  
+**A:** Split the sentence into words, then find the minimum length.
+
+**Q: What's the most efficient way?**  
+**A:** Single loop through words, tracking minimum length - O(n) time complexity.
+
+**Q: How do you handle punctuation?**  
+**A:** May need to clean words first, but for basic case, split() works.
 ```
 
 ## 2. **Using reduce() Method**

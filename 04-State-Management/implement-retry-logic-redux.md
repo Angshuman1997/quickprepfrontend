@@ -1,100 +1,88 @@
-# How to implement retry logic with Redux?
+# How to implement retry logic in Redux?
 
 ## Question
-How to implement retry logic with Redux?
+How to implement retry logic in Redux?
 
 ## Answer
+Retry failed API calls automatically with delays between attempts.
 
-Retry logic is essential for handling transient network failures and improving application reliability. Redux Toolkit's `createAsyncThunk` provides a foundation for implementing robust retry mechanisms with exponential backoff, circuit breakers, and intelligent error handling.
-
-## Basic Retry Implementation
-
-### 1. **Simple Retry with Fixed Delay**
-
-```typescript
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-
-interface ApiState {
-    data: any;
-    loading: boolean;
-    error: string | null;
-    retryCount: number;
-}
-
-const initialState: ApiState = {
-    data: null,
-    loading: false,
-    error: null,
-    retryCount: 0,
-};
-
-// Async thunk with retry logic
-export const fetchDataWithRetry = createAsyncThunk(
-    'api/fetchData',
-    async (_, { rejectWithValue, dispatch, getState }) => {
-        const maxRetries = 3;
-        let lastError: any = null;
-
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-                const response = await fetch('/api/data');
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                return await response.json();
-            } catch (error) {
-                lastError = error;
-
-                if (attempt < maxRetries) {
-                    // Wait before retrying (fixed delay)
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    continue;
-                }
-
-                // Max retries reached
-                return rejectWithValue({
-                    message: 'Failed after multiple attempts',
-                    attempts: attempt + 1,
-                    lastError: error.message,
-                });
-            }
+## Basic Example
+```javascript
+const fetchData = createAsyncThunk(
+  'data/fetch',
+  async (_, { rejectWithValue }) => {
+    const maxRetries = 3;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch('/api/data');
+        if (!response.ok) throw new Error('API Error');
+        return await response.json();
+      } catch (error) {
+        if (attempt === maxRetries) {
+          return rejectWithValue(error.message);
         }
+        // Wait 1 second before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
+  }
 );
 
-// Slice with retry tracking
-const apiSlice = createSlice({
-    name: 'api',
-    initialState,
-    reducers: {
-        resetRetryCount: (state) => {
-            state.retryCount = 0;
-            state.error = null;
-        },
-    },
-    extraReducers: (builder) => {
-        builder
-            .addCase(fetchDataWithRetry.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-                state.retryCount += 1;
-            })
-            .addCase(fetchDataWithRetry.fulfilled, (state, action) => {
-                state.loading = false;
-                state.data = action.payload;
-                state.retryCount = 0;
-            })
-            .addCase(fetchDataWithRetry.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload.message;
-            });
-    },
+const dataSlice = createSlice({
+  name: 'data',
+  initialState: { items: [], loading: false, error: null },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchData.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  }
 });
-
-export const { resetRetryCount } = apiSlice.actions;
 ```
+
+## In Component
+```javascript
+function DataList() {
+  const dispatch = useDispatch();
+  const { items, loading, error } = useSelector(state => state.data);
+
+  useEffect(() => {
+    dispatch(fetchData());
+  }, [dispatch]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <ul>
+      {items.map(item => <li key={item.id}>{item.name}</li>)}
+    </ul>
+  );
+}
+```
+
+## Interview Q&A
+
+**Q: What is retry logic?**
+
+A: Automatically retry failed API calls to handle temporary network issues.
+
+**Q: When should you retry API calls?**
+
+A: On network errors or server errors (5xx), but not on client errors (4xx).
+
+**Q: How do you implement retry in Redux?**
+
+A: Use createAsyncThunk with a loop that catches errors and retries with delays.
 
 ### 2. **Component with Retry UI**
 

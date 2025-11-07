@@ -1,73 +1,68 @@
-# How to handle loading states with Redux Toolkit?
+# How to handle loading states in Redux Toolkit?
 
 ## Question
-How to handle loading states with Redux Toolkit?
+How to handle loading states in Redux Toolkit?
 
 ## Answer
+Use createAsyncThunk which generates pending/fulfilled/rejected actions. Handle them in extraReducers to manage loading state.
 
-Loading states are crucial for providing good user experience in Redux applications. Redux Toolkit's `createAsyncThunk` automatically generates pending/fulfilled/rejected actions, making loading state management straightforward. However, there are several patterns for handling different loading scenarios effectively.
-
-## Basic Loading States
-
-### 1. **Simple Loading State**
-
-```typescript
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-
-interface UsersState {
-    data: User[];
-    loading: boolean;
-    error: string | null;
-}
-
-const initialState: UsersState = {
-    data: [],
-    loading: false,
-    error: null,
-};
-
-// Async thunk for fetching users
-export const fetchUsers = createAsyncThunk(
-    'users/fetchUsers',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await fetch('/api/users');
-            if (!response.ok) throw new Error('Failed to fetch users');
-            return await response.json();
-        } catch (error) {
-            return rejectWithValue('Network error');
-        }
-    }
-);
-
-// Slice with loading state
+## Basic Example
+```javascript
 const usersSlice = createSlice({
-    name: 'users',
-    initialState,
-    reducers: {
-        clearError: (state) => {
-            state.error = null;
-        },
-    },
-    extraReducers: (builder) => {
-        builder
-            .addCase(fetchUsers.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchUsers.fulfilled, (state, action) => {
-                state.loading = false;
-                state.data = action.payload;
-            })
-            .addCase(fetchUsers.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
-    },
+  name: 'users',
+  initialState: { data: [], loading: false, error: null },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUsers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      });
+  }
 });
-
-export const { clearError } = usersSlice.actions;
 ```
+
+## In Component
+```javascript
+function UsersList() {
+  const dispatch = useDispatch();
+  const { data, loading, error } = useSelector(state => state.users);
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <ul>
+      {data.map(user => <li key={user.id}>{user.name}</li>)}
+    </ul>
+  );
+}
+```
+
+## Interview Q&A
+
+**Q: How do you handle loading states in Redux Toolkit?**
+
+A: Use createAsyncThunk which generates pending/fulfilled/rejected actions, then handle them in extraReducers to set loading: true/false.
+
+**Q: What's the pattern for loading states?**
+
+A: Set loading: true in pending action, set loading: false in both fulfilled and rejected actions.
+
+**Q: How do you show loading in components?**
+
+A: Use useSelector to get the loading state from Redux store, conditionally render loading spinner or message.
 
 ### 2. **Component Usage**
 

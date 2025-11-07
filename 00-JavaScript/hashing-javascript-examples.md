@@ -1,33 +1,42 @@
-# What is hashing? Explain with JavaScript examples.
+# What is Hashing?
 
-## Question
-What is hashing? Explain with JavaScript examples.
+## Simple Answer
+Hashing converts data into a fixed-size string. Same input always gives same output.
 
-## Answer
+## Basic Example
+```javascript
+// Simple hash function (not secure!)
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return hash;
+}
 
-**Hashing** is the process of converting input data (of any size) into a fixed-size string of characters, typically a hash value or hash code. The output is usually a short, fixed-length string that represents the input data. Hash functions are designed to be fast to compute and have the property that even a small change in input produces a significantly different hash value.
+console.log(simpleHash("hello")); // Always same number
+console.log(simpleHash("hello")); // Same input, same output
+console.log(simpleHash("Hello")); // Different input, different output
+```
 
-## 1. **Basic Concepts of Hashing**
-
-### **Properties of Good Hash Functions:**
-- **Deterministic**: Same input always produces same hash
-- **Fast**: Quick to compute
-- **Avalanche Effect**: Small input changes produce large hash changes
-- **Preimage Resistance**: Hard to find input from hash
-- **Collision Resistance**: Hard to find two inputs with same hash
-
-### **Common Use Cases:**
-- Password storage
-- Data integrity verification
-- Digital signatures
+## Uses
+- Password storage (never store plain passwords)
+- Data integrity checks
+- Hash tables (objects in JavaScript)
 - Caching
-- Data structures (Hash tables)
 - File comparison
-- Blockchain/cryptocurrency
 
-## 2. **Built-in JavaScript Hashing**
+## Interview Q&A
 
-JavaScript doesn't have built-in cryptographic hashing in the standard library, but you can use the Web Crypto API in browsers or Node.js crypto module.
+**Q: What is hashing?**  
+**A:** Converting data into a fixed-size string. Used for passwords, data integrity, and fast lookups.
+
+**Q: Why use hashing for passwords?**  
+**A:** Hashing is one-way - you can't get the original password from the hash, but you can verify if a password matches.
+
+**Q: What's a hash collision?**  
+**A:** When two different inputs produce the same hash output. Good hash functions minimize this.
 
 ### **Using Web Crypto API (Browser):**
 ```javascript

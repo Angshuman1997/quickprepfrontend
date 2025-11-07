@@ -1,34 +1,57 @@
-# What is a higher-order function? Provide examples.
+# Higher-Order Functions
 
-## Question
-What is a higher-order function? Provide examples.
+## Simple Answer
+Functions that take other functions as arguments or return functions.
 
-## Answer
+## Examples
 
-**Higher-order functions** are functions that either:
-1. **Take other functions as arguments**, or
-2. **Return functions as their result**, or
-3. **Both**
-
-They treat functions as "first-class citizens" - meaning functions can be passed around like any other value.
-
-## 1. **Functions that Take Functions as Arguments**
-
-### Array Methods (Most Common Examples):
+**Array methods:**
 ```javascript
 const numbers = [1, 2, 3, 4, 5];
 
-// forEach - takes a function to execute for each element
-numbers.forEach(num => console.log(num * 2)); // 2, 4, 6, 8, 10
+numbers.forEach(num => console.log(num));     // Takes function
+const doubled = numbers.map(num => num * 2);  // Takes function, returns array
+const evens = numbers.filter(num => num % 2 === 0); // Takes function, returns array
+```
 
-// map - takes a function to transform each element
-const doubled = numbers.map(num => num * 2); // [2, 4, 6, 8, 10]
+**Custom higher-order function:**
+```javascript
+function greetUser(greetingFunction, name) {
+  return greetingFunction(name);
+}
 
-// filter - takes a function to test each element
-const evenNumbers = numbers.filter(num => num % 2 === 0); // [2, 4]
+const sayHello = name => `Hello, ${name}!`;
+const sayHi = name => `Hi, ${name}!`;
 
-// reduce - takes a function to reduce array to single value
-const sum = numbers.reduce((total, num) => total + num, 0); // 15
+console.log(greetUser(sayHello, 'Alice')); // "Hello, Alice!"
+console.log(greetUser(sayHi, 'Bob'));     // "Hi, Bob!"
+```
+
+## Functions that return functions:
+```javascript
+function createMultiplier(multiplier) {
+  return function(number) {
+    return number * multiplier;
+  };
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+console.log(double(5)); // 10
+console.log(triple(5)); // 15
+```
+
+## Interview Q&A
+
+**Q: What is a higher-order function?**  
+**A:** A function that takes other functions as arguments or returns a function.
+
+**Q: Give examples of higher-order functions.**  
+**A:** Array methods like map, filter, forEach. Also functions like setTimeout that take callbacks.
+
+**Q: Why are they useful?**  
+**A:** They enable functional programming patterns, code reuse, and abstraction.
 
 // find - takes a function to find first matching element
 const firstEven = numbers.find(num => num % 2 === 0); // 2

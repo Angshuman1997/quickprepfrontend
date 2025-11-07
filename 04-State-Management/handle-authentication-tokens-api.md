@@ -4,65 +4,86 @@
 How to handle authentication tokens in API calls?
 
 ## Answer
+Store tokens securely and add them to request headers with "Bearer" prefix.
 
-Handling authentication tokens properly is crucial for secure API communication. This involves token storage, automatic refresh, request/response interceptors, and handling various authentication scenarios. Poor token management can lead to security vulnerabilities and poor user experience.
+## Basic Example
+```javascript
+// Store tokens
+const setTokens = (accessToken, refreshToken) => {
+  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('refreshToken', refreshToken);
+};
 
-## Token Storage Strategies
+// Get token
+const getAccessToken = () => {
+  return localStorage.getItem('accessToken');
+};
 
-### 1. **Secure Token Storage**
-
-```typescript
-// Token storage utilities
-class TokenManager {
-    private static readonly ACCESS_TOKEN_KEY = 'access_token';
-    private static readonly REFRESH_TOKEN_KEY = 'refresh_token';
-    private static readonly TOKEN_EXPIRY_KEY = 'token_expiry';
-
-    // Store tokens securely
-    static setTokens(accessToken: string, refreshToken?: string, expiresIn?: number) {
-        const expiry = expiresIn ? Date.now() + (expiresIn * 1000) : null;
-
-        localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
-        if (refreshToken) {
-            localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-        }
-        if (expiry) {
-            localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiry.toString());
-        }
+// API call with token
+const apiCall = async (url) => {
+  const token = getAccessToken();
+  
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
     }
-
-    // Get access token
-    static getAccessToken(): string | null {
-        return localStorage.getItem(this.ACCESS_TOKEN_KEY);
-    }
-
-    // Get refresh token
-    static getRefreshToken(): string | null {
-        return localStorage.getItem(this.REFRESH_TOKEN_KEY);
-    }
-
-    // Check if token is expired
-    static isTokenExpired(): boolean {
-        const expiry = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
-        if (!expiry) return false;
-
-        return Date.now() >= parseInt(expiry);
-    }
-
-    // Clear all tokens
-    static clearTokens() {
-        localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-        localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-        localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
-    }
-
-    // Check if user is authenticated
-    static isAuthenticated(): boolean {
-        const token = this.getAccessToken();
-        return !!(token && !this.isTokenExpired());
-    }
-}
+  });
+  
+  return response.json();
+};
 ```
+
+## Token Refresh
+```javascript
+const refreshToken = async () => {
+  const refreshToken = localStorage.getItem('refreshToken');
+  
+  const response = await fetch('/api/auth/refresh', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken })
+  });
+  
+  const data = await response.json();
+  setTokens(data.accessToken, data.refreshToken);
+  
+  return data.accessToken;
+};
+```
+
+## In Redux
+```javascript
+const login = createAsyncThunk(
+  'auth/login',
+  async (credentials) => {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    });
+    
+    const data = await response.json();
+    setTokens(data.accessToken, data.refreshToken);
+    
+    return data.user;
+  }
+);
+```
+
+## Interview Q&A
+
+**Q: How do you handle authentication tokens?**
+
+A: Store access tokens securely and include them in API request headers with "Bearer" prefix.
+
+**Q: What are refresh tokens for?**
+
+A: To get new access tokens when they expire without requiring user to login again.
+
+**Q: Where should you store tokens?**
+
+A: Access tokens in localStorage or memory, refresh tokens as httpOnly cookies for security.
 
 ### 2. **Memory-Based Storage for Sensitive Apps**
 

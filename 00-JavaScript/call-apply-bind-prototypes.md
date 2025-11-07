@@ -1,54 +1,70 @@
-# Explain call, apply, and bind methods. What are prototypes?
+# call, apply, bind Methods
 
-## Question
-Explain call, apply, and bind methods. What are prototypes?
+## Simple Answer
+These methods control what `this` refers to in a function.
 
-## Answer
+## call()
+Calls function with specific `this` and individual arguments.
 
-## Part 1: call, apply, and bind Methods
-
-**`call`**, **`apply`**, and **`bind`** are methods available on all JavaScript functions that allow you to control the `this` context and pass arguments in different ways. They are essential for function borrowing, method sharing, and controlling execution context.
-
-### 1. **`call()` Method**
-
-**Purpose**: Calls a function with a given `this` value and individual arguments.
-
-**Syntax**: `function.call(thisArg, arg1, arg2, ...)`
-
-#### Basic Example:
 ```javascript
 function greet(message) {
-    return `${message}, ${this.name}!`;
+  return `${message}, ${this.name}!`;
 }
 
 const person = { name: 'Alice' };
-
-// Using call to set 'this' to person
 console.log(greet.call(person, 'Hello')); // "Hello, Alice!"
 ```
 
-#### Function Borrowing Example:
-```javascript
-const person1 = { name: 'John', age: 30 };
-const person2 = { name: 'Jane', age: 25 };
+## apply()
+Same as call, but arguments as array.
 
-function introduce() {
-    return `Hi, I'm ${this.name} and I'm ${this.age} years old.`;
+```javascript
+function sum(a, b, c) {
+  return a + b + c;
 }
 
-// Borrow the introduce function for different objects
-console.log(introduce.call(person1)); // "Hi, I'm John and I'm 30 years old."
-console.log(introduce.call(person2)); // "Hi, I'm Jane and I'm 25 years old."
+console.log(sum.apply(null, [1, 2, 3])); // 6
 ```
 
-### 2. **`apply()` Method**
+## bind()
+Returns new function with `this` permanently set.
 
-**Purpose**: Similar to `call()`, but takes arguments as an array instead of individual parameters.
-
-**Syntax**: `function.apply(thisArg, [argsArray])`
-
-#### Finding Max/Min in Array:
 ```javascript
+const person = { name: 'Bob' };
+const greet = function() {
+  return `Hello, ${this.name}!`;
+};
+
+const greetBob = greet.bind(person);
+console.log(greetBob()); // "Hello, Bob!"
+```
+
+## Prototypes
+Every object has a prototype. It's like a fallback object for properties/methods.
+
+```javascript
+function Person(name) {
+  this.name = name;
+}
+
+Person.prototype.greet = function() {
+  return `Hello, I'm ${this.name}`;
+};
+
+const alice = new Person('Alice');
+console.log(alice.greet()); // "Hello, I'm Alice"
+```
+
+## Interview Q&A
+
+**Q: What's the difference between call and apply?**  
+**A:** call takes individual arguments, apply takes an array of arguments.
+
+**Q: When would you use bind?**  
+**A:** When you want to create a function with a fixed `this` context for later use.
+
+**Q: What are prototypes?**  
+**A:** Prototypes are objects that other objects inherit properties and methods from.
 const numbers = [5, 2, 8, 1, 9, 3];
 
 // Using apply to spread array as arguments

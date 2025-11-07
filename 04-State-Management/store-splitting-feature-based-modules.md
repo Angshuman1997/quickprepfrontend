@@ -1,62 +1,74 @@
-# Explain store splitting / feature-based state modules
+# How to split Redux store by features?
 
 ## Question
-Explain store splitting / feature-based state modules.
+How to split Redux store by features?
 
 ## Answer
+Split store by features instead of one big reducer. Each feature has its own slice, actions, and state.
 
-Store splitting and feature-based modules are architectural patterns for organizing Redux state into logical, maintainable units. Instead of having one monolithic reducer, you split the state by features or domains, making the codebase more scalable and easier to maintain.
-
-## Why Split the Store?
-
-### 1. **Monolithic Store Problems**
-
-**Before splitting (monolithic approach):**
+## Bad: Monolithic Store
 ```javascript
-// Single large reducer file
-const initialState = {
-    // User management
-    currentUser: null,
-    users: [],
-    userLoading: false,
-    userError: null,
-
-    // Product management
-    products: [],
-    selectedProduct: null,
-    productLoading: false,
-    productError: null,
-
-    // Cart management
-    cartItems: [],
-    cartTotal: 0,
-    cartLoading: false,
-
-    // UI state
-    sidebarOpen: false,
-    theme: 'light',
-    notifications: [],
-
-    // And more...
-};
-
-function appReducer(state = initialState, action) {
-    switch (action.type) {
-        // 50+ action types handled in one place
-        case 'FETCH_USER_REQUEST':
-            return { ...state, userLoading: true };
-        case 'FETCH_USER_SUCCESS':
-            return { ...state, userLoading: false, currentUser: action.payload };
-        case 'ADD_TO_CART':
-            return {
-                ...state,
-                cartItems: [...state.cartItems, action.payload],
-                cartTotal: state.cartTotal + action.payload.price
-            };
-        // 100+ lines of switch cases...
-    }
-}
+// One huge reducer with everything mixed
+const rootReducer = combineReducers({
+  users: usersReducer,
+  products: productsReducer,
+  cart: cartReducer,
+  auth: authReducer
+  // All in one place - hard to maintain!
+});
 ```
+
+## Good: Feature-Based Modules
+```javascript
+// features/users/usersSlice.js
+const usersSlice = createSlice({
+  name: 'users',
+  initialState: { data: [], loading: false },
+  reducers: {
+    setUsers: (state, action) => { state.data = action.payload; },
+    setLoading: (state, action) => { state.loading = action.payload; }
+  }
+});
+
+// features/products/productsSlice.js
+const productsSlice = createSlice({
+  name: 'products',
+  initialState: { items: [], loading: false },
+  reducers: {
+    setProducts: (state, action) => { state.items = action.payload; }
+  }
+});
+
+// store.js
+const store = configureStore({
+  reducer: {
+    users: usersSlice.reducer,
+    products: productsSlice.reducer,
+  }
+});
+```
+
+## Benefits
+
+✅ **Easier to maintain** - each feature in own file  
+✅ **Better code organization** - related logic together  
+✅ **Team collaboration** - different developers work on different features  
+✅ **Clear separation** - no conflicts between features  
+✅ **Easier testing** - test features independently  
+
+## Interview Q&A
+
+**Q: Why split Redux store by features?**
+
+A: Makes code more maintainable. Each feature has its own slice, reducer, and actions in separate files.
+
+**Q: How do you combine feature slices?**
+
+A: Pass them as an object to configureStore's reducer option: { users: usersSlice.reducer, products: productsSlice.reducer }
+
+**Q: What's the benefit for teams?**
+
+A: Different developers can work on different features without merge conflicts or stepping on each other's code.
 
 **Problems with monolithic stores:**
 - **Hard to maintain**: One huge file with hundreds of lines

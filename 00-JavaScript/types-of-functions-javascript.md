@@ -1,33 +1,45 @@
-# What are the different types of functions in JavaScript?
+# Types of Functions in JavaScript
 
-## Question
-What are the different types of functions in JavaScript?
-
-## Answer
-
-JavaScript has several ways to define functions, each with different characteristics and use cases.
-
-## 1. **Function Declaration**
+## Function Declaration
 ```javascript
-// Function declaration - hoisted
 function greet(name) {
-    return `Hello, ${name}!`;
+  return `Hello, ${name}!`;
 }
-
-console.log(greet("John")); // "Hello, John!"
 ```
+- Hoisted (can call before declaring)
+- Has name property
 
-**Characteristics:**
-- ✅ **Hoisted** - Can be called before declaration
-- ✅ **Named** - Has a name property
-- ❌ **Not suitable for conditional definition**
-
-## 2. **Function Expression**
+## Function Expression
 ```javascript
-// Anonymous function expression
 const greet = function(name) {
-    return `Hello, ${name}!`;
+  return `Hello, ${name}!`;
 };
+```
+- Not hoisted
+- Can be anonymous
+
+## Arrow Function
+```javascript
+const greet = (name) => {
+  return `Hello, ${name}!`;
+};
+
+// Or shorter:
+const greet = name => `Hello, ${name}!`;
+```
+- No own `this`
+- Can't be used as constructor
+
+## Interview Q&A
+
+**Q: What's the difference between function declaration and expression?**  
+**A:** Declaration is hoisted and can be called before definition. Expression is not hoisted.
+
+**Q: When would you use arrow functions?**  
+**A:** For short functions, callbacks, when you want to preserve `this` from parent scope.
+
+**Q: Can arrow functions be used as constructors?**  
+**A:** No, they don't have their own `this` and can't be called with `new`.
 
 // Named function expression
 const factorial = function fact(n) {

@@ -1,34 +1,70 @@
-# What is BEM naming convention?
+# BEM Naming Convention
 
-## Question
-What is BEM naming convention?
+## Simple Answer
+BEM = Block__Element--Modifier. Clear way to name CSS classes.
 
-# What is BEM naming convention?
+## Structure
 
-## Question
-What is BEM naming convention?
-
-## Answer
-
-BEM (Block Element Modifier) is a popular CSS naming convention that helps create maintainable and scalable CSS code. It provides a clear structure for naming CSS classes.
-
-## BEM Structure
-
-### Block
-A block is a standalone component that is meaningful on its own.
-
+**Block**: Standalone component
 ```html
-<!-- Block: header -->
-<header class="header">
-  <div class="logo">...</div>
-  <nav class="nav">...</nav>
-</header>
+<div class="card">  <!-- Block -->
+  <h2 class="card__title">Title</h2>  <!-- Element -->
+  <p class="card__text">Content</p>   <!-- Element -->
+</div>
+```
 
-<!-- Block: button -->
-<button class="button">Click me</button>
+**Element**: Part of a block
+```html
+<button class="button button--primary">  <!-- Block + Modifier -->
+  Click me
+</button>
+```
 
-<!-- Block: card -->
-<div class="card">
+**Modifier**: Different version of block/element
+```html
+<button class="button button--primary button--large">
+  Big Button
+</button>
+```
+
+## Rules
+
+- **Block**: `block-name`
+- **Element**: `block-name__element-name`  
+- **Modifier**: `block-name--modifier` or `block-name__element--modifier`
+
+## CSS Example
+```css
+.card {
+  border: 1px solid #ccc;
+  padding: 1rem;
+}
+
+.card__title {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.card__text {
+  color: #666;
+}
+
+.card--featured {
+  border-color: blue;
+  background: lightblue;
+}
+```
+
+## Interview Q&A
+
+**Q: What is BEM?**  
+**A:** Block Element Modifier - a naming convention for CSS classes that makes code more maintainable.
+
+**Q: How does BEM work?**  
+**A:** Block (component), Element (part of block), Modifier (variation). Separated by __ and --.
+
+**Q: Why use BEM?**  
+**A:** Prevents CSS conflicts, makes classes self-documenting, easier to maintain large codebases.
   <h3 class="card__title">Card Title</h3>
   <p class="card__content">Card content</p>
 </div>

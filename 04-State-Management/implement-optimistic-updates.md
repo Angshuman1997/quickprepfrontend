@@ -1,54 +1,91 @@
-# How to implement optimistic updates?
+# What are optimistic updates?
 
 ## Question
-How to implement optimistic updates?
+What are optimistic updates?
 
 ## Answer
+Update UI immediately, then handle server response. Rollback on error.
 
-Optimistic updates provide instant UI feedback by updating the state immediately, then handling the server response asynchronously. This creates a responsive user experience but requires careful error handling and rollback strategies. Redux Toolkit makes optimistic updates straightforward with `createAsyncThunk` and proper state management.
+## Basic Example
+```javascript
+const toggleTodo = createAsyncThunk(
+  'todos/toggle',
+  async (todoId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/todos/${todoId}/toggle`, {
+        method: 'PATCH'
+      });
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
-## Basic Optimistic Update Pattern
-
-### 1. **Simple Optimistic Update**
-
-```typescript
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-
-interface Todo {
-    id: number;
-    text: string;
-    completed: boolean;
-}
-
-interface TodosState {
-    items: Todo[];
-    loading: boolean;
-    error: string | null;
-}
-
-const initialState: TodosState = {
-    items: [],
-    loading: false,
-    error: null,
-};
-
-// Async thunk for toggling todo
-export const toggleTodo = createAsyncThunk(
-    'todos/toggleTodo',
-    async (todoId: number, { rejectWithValue }) => {
-        try {
-            const response = await fetch(`/api/todos/${todoId}/toggle`, {
-                method: 'PATCH',
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to toggle todo');
-            }
-
-            return { todoId, completed: await response.json() };
-        } catch (error) {
-            return rejectWithValue('Network error');
+const todosSlice = createSlice({
+  name: 'todos',
+  initialState: { items: [] },
+  reducers: {
+    // Optimistic update
+    toggleOptimistic: (state, action) => {
+      const todo = state.items.find(t => t.id === action.payload);
+      if (todo) {
+        todo.completed = !todo.completed; // Update immediately
+      }
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(toggleTodo.rejected, (state, action) => {
+        // Rollback on server error
+        const todo = state.items.find(t => t.id === action.meta.arg);
+        if (todo) {
+          todo.completed = !todo.completed; // Undo the change
         }
+      });
+  }
+});
+```
+
+## In Component
+```javascript
+function TodoItem({ todo }) {
+  const dispatch = useDispatch();
+
+  const handleToggle = () => {
+    // Update UI immediately
+    dispatch(toggleOptimistic(todo.id));
+    
+    // Then make API call
+    dispatch(toggleTodo(todo.id));
+  };
+
+  return (
+    <div>
+      <input
+        type="checkbox"
+        checked={todo.completed}
+        onChange={handleToggle}
+      />
+      {todo.text}
+    </div>
+  );
+}
+```
+
+## Interview Q&A
+
+**Q: What are optimistic updates?**
+
+A: Update the UI immediately, then handle the server response. Makes app feel faster.
+
+**Q: What happens if the server request fails?**
+
+A: Rollback the optimistic update to match server state.
+
+**Q: When should you use optimistic updates?**
+
+A: For actions that usually succeed, like toggles or likes, where immediate feedback improves UX.
     }
 );
 

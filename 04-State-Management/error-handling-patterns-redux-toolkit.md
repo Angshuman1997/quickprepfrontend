@@ -1,99 +1,65 @@
-# Error handling patterns in Redux Toolkit
+# How to handle errors in Redux Toolkit?
 
 ## Question
-Error handling patterns in Redux Toolkit
+How to handle errors in Redux Toolkit?
 
 ## Answer
+Use rejectWithValue in createAsyncThunk to return custom error messages, handle in rejected case.
 
-Redux Toolkit provides powerful patterns for handling errors in async operations through `createAsyncThunk` and `createSlice`. Proper error handling ensures a good user experience, prevents crashes, and provides meaningful feedback. Understanding these patterns is crucial for building robust Redux applications.
-
-## Basic Error Handling with createAsyncThunk
-
-### 1. **Standard Async Thunk with Error Handling**
-
-```typescript
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-}
-
-interface UsersState {
-    data: User[];
-    loading: boolean;
-    error: string | null;
-}
-
-// Async thunk with error handling
-export const fetchUsers = createAsyncThunk(
-    'users/fetchUsers',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await fetch('/api/users');
-
-            if (!response.ok) {
-                // Handle HTTP errors
-                const errorData = await response.json().catch(() => ({}));
-                return rejectWithValue({
-                    message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-                    status: response.status,
-                    code: errorData.code,
-                });
-            }
-
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            // Handle network errors
-            return rejectWithValue({
-                message: error instanceof Error ? error.message : 'Network error',
-                code: 'NETWORK_ERROR',
-            });
-        }
+## Basic Example
+```javascript
+const fetchUsers = createAsyncThunk(
+  'users/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch('/api/users');
+      if (!response.ok) throw new Error('API Error');
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message); // Return error instead of throwing
     }
+  }
 );
 
-// Slice with error handling
 const usersSlice = createSlice({
-    name: 'users',
-    initialState: {
-        data: [],
-        loading: false,
-        error: null,
-    } as UsersState,
-    reducers: {
-        clearError: (state) => {
-            state.error = null;
-        },
-    },
-    extraReducers: (builder) => {
-        builder
-            .addCase(fetchUsers.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchUsers.fulfilled, (state, action) => {
-                state.loading = false;
-                state.data = action.payload;
-            })
-            .addCase(fetchUsers.rejected, (state, action) => {
-                state.loading = false;
-                // Handle different error types
-                if (action.payload) {
-                    // Error from rejectWithValue
-                    state.error = (action.payload as any).message;
-                } else if (action.error) {
-                    // Generic error
-                    state.error = action.error.message || 'An error occurred';
-                }
-            });
-    },
+  name: 'users',
+  initialState: { data: [], loading: false, error: null },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload; // Error message from rejectWithValue
+      });
+  }
 });
-
-export const { clearError } = usersSlice.actions;
 ```
+
+## In Component
+```javascript
+function UsersList() {
+  const { error } = useSelector(state => state.users);
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  return <div>Users list...</div>;
+}
+```
+
+## Interview Q&A
+
+**Q: How do you handle errors in Redux Toolkit?**
+
+A: Use rejectWithValue in createAsyncThunk to return a custom error payload, then handle it in the rejected case.
+
+**Q: What's rejectWithValue?**
+
+A: A function passed to createAsyncThunk that lets you return a custom error value instead of throwing an exception.
+
+**Q: How do you show errors to users?**
+
+A: Store the error in Redux state, use useSelector to get it in components, and conditionally render error messages.
 
 ### 2. **Typed Error Handling**
 

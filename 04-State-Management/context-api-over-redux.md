@@ -1,72 +1,86 @@
-# When do you prefer Context API over Redux?
+# Context API vs Redux
 
 ## Question
-When do you prefer Context API over Redux?
+When to use Context API vs Redux?
 
 ## Answer
+Context API for simple state sharing in small apps. Redux for complex state management in large apps.
 
-Context API and Redux are both state management solutions in React, but they serve different purposes and excel in different scenarios. Context API is built into React and is great for simpler cases, while Redux is a more powerful, predictable state management library. The choice depends on your application's complexity, team size, and specific requirements.
+## Context API Example
+```javascript
+const ThemeContext = createContext();
 
-## Context API Overview
+function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState('light');
 
-### 1. **Basic Context API Usage**
-
-```typescript
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-// Create context
-interface ThemeContextType {
-    theme: 'light' | 'dark';
-    toggleTheme: () => void;
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-// Provider component
-interface ThemeProviderProps {
-    children: ReactNode;
+function ThemedButton() {
+  const { theme, setTheme } = useContext(ThemeContext);
+  return (
+    <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+      {theme}
+    </button>
+  );
 }
+```
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+## Redux Example
+```javascript
+const themeSlice = createSlice({
+  name: 'theme',
+  initialState: 'light',
+  reducers: {
+    toggleTheme: (state) => state === 'light' ? 'dark' : 'light'
+  }
+});
 
-    const toggleTheme = () => {
-        setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-    };
+function ThemedButton() {
+  const theme = useSelector(state => state.theme);
+  const dispatch = useDispatch();
+  return (
+    <button onClick={() => dispatch(toggleTheme())}>
+      {theme}
+    </button>
+  );
+}
+```
 
-    const value = {
-        theme,
-        toggleTheme,
-    };
+## When to Use Context API
 
-    return (
-        <ThemeContext.Provider value={value}>
-            {children}
-        </ThemeContext.Provider>
-    );
-};
+✅ **Small to medium apps**  
+✅ **Simple state sharing**  
+✅ **Theme/user preferences**  
+✅ **No complex async logic**  
+✅ **Built-in React (no extra libraries)**  
 
-// Custom hook for using context
-export const useTheme = (): ThemeContextType => {
-    const context = useContext(ThemeContext);
-    if (context === undefined) {
-        throw new Error('useTheme must be used within a ThemeProvider');
-    }
-    return context;
-};
+## When to Use Redux
 
-// Usage in components
-const Header: React.FC = () => {
-    const { theme, toggleTheme } = useTheme();
+✅ **Large applications**  
+✅ **Complex state logic**  
+✅ **Many developers working together**  
+✅ **Time-travel debugging needed**  
+✅ **Advanced middleware required**  
+✅ **Predictable state updates**  
 
-    return (
-        <header className={theme}>
-            <button onClick={toggleTheme}>
-                Switch to {theme === 'light' ? 'dark' : 'light'} mode
-            </button>
-        </header>
-    );
-};
+## Interview Q&A
+
+**Q: When do you choose Context API over Redux?**
+
+A: For small apps with simple state needs. Context API is built-in React and easier for basic state sharing.
+
+**Q: What's the main difference between Context API and Redux?**
+
+A: Context API is for sharing state between components. Redux is for managing complex application state with predictable updates.
+
+**Q: Can Context API replace Redux?**
+
+A: For simple cases yes, but Redux is better for complex apps with many features, multiple developers, and advanced debugging needs.
 ```
 
 ### 2. **Context API with useReducer**
