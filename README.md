@@ -25,13 +25,13 @@
 - **[04-State-Management](#04-state-management)** - 18 state management patterns
 - **[05-Performance-Optimization](#05-performance-optimization)** - 13 optimization strategies
 - **[06-Micro-Frontend-Architecture](#06-micro-frontend-architecture)** - 7 micro-frontend concepts
-- **[12-System-Design-Frontend](#12-system-design-frontend)** - 🆕 3 comprehensive system design guides
+- **[12-System-Design-Frontend](#12-system-design-frontend)** - 3 comprehensive system design guides
 
 ### Development & Operations
 - **[07-Bundlers](#07-bundlers)** - 7 modern bundling strategies
 - **[08-Testing](#08-testing)** - 7 testing fundamentals + Advanced patterns coming
-- **[13-Backend-Integration-Patterns](#13-backend-integration-patterns)** - 🆕 4 full-stack integration guides
-- **[14-Production-Deployment-Scalability](#14-production-deployment-scalability)** - 🆕 Production deployment strategies
+- **[13-Backend-Integration-Patterns](#13-backend-integration-patterns)** - 4 full-stack integration guides
+- **[14-Production-Deployment-Scalability](#14-production-deployment-scalability)** - Production deployment strategies
 
 ### Professional Skills
 - **[09-HTML-CSS-UI](#09-html-css-ui)** - 7 UI/UX focused questions
@@ -284,7 +284,7 @@
 
 ---
 
-## 🆕 12-System-Design-Frontend
+## 12-System-Design-Frontend
 
 ### Scalable Architecture Patterns
 1. **Scalable Frontend Architecture Patterns** - Comprehensive guide covering micro-frontends, module federation, scalable component architecture, and enterprise-level system design
@@ -298,7 +298,7 @@
 
 ---
 
-## 🆕 13-Backend-Integration-Patterns
+## 13-Backend-Integration-Patterns
 
 ### Full-Stack Integration
 1. **API Design Patterns & Integration** - RESTful services, GraphQL clients, API versioning, error handling, and integration best practices
@@ -314,7 +314,7 @@
 
 ---
 
-## 🆕 14-Production-Deployment-Scalability
+## 14-Production-Deployment-Scalability
 
 ### Enterprise Deployment
 1. **CI/CD Pipelines & Deployment Strategies** - GitHub Actions, automated testing, deployment pipelines, environment management, and production best practices
