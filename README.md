@@ -13,34 +13,35 @@
 
 **Experience Level:** 3-6 years | **Readiness Score:** 9.5/10 across all roles
 
-## 📁 Comprehensive Section Overview
+## 📁 Optimized Learning Progression
 
-### Core Frontend Technologies
-- **[00-JavaScript](#00-javascript)** - 16 advanced questions
-- **[01-React-Core-Advanced](#01-react-core-advanced)** - 23 deep-dive questions  
-- **[02-NextJS-App-Router](#02-nextjs-app-router)** - 22 modern Next.js questions
-- **[03-TypeScript-Practical](#03-typescript-practical)** - 11 practical TypeScript patterns
+### 🏗️ Foundation Layer (01-04)
+- **[01-JavaScript](#01-javascript)** - 16 advanced JavaScript fundamentals
+- **[02-React-Core-Advanced](#02-react-core-advanced)** - 23 deep-dive React concepts  
+- **[03-Hooks-(Deep & Practical)](#03-hooks-deep--practical)** - 22 comprehensive hook patterns
+- **[04-HTML-CSS-UI](#04-html-css-ui)** - 7 UI/UX focused questions
 
-### Advanced Architecture & Performance
-- **[04-State-Management](#04-state-management)** - 18 state management patterns
-- **[05-Performance-Optimization](#05-performance-optimization)** - 13 optimization strategies
-- **[06-Micro-Frontend-Architecture](#06-micro-frontend-architecture)** - 7 micro-frontend concepts
-- **[12-System-Design-Frontend](#12-system-design-frontend)** - 3 comprehensive system design guides
+### ⚛️ Framework & Tools Layer (05-10)
+- **[05-NextJS-App-Router](#05-nextjs-app-router)** - 22 modern Next.js questions
+- **[06-TypeScript-Practical](#06-typescript-practical)** - 11 practical TypeScript patterns
+- **[07-State-Management](#07-state-management)** - 18 state management patterns
+- **[08-Performance-Optimization](#08-performance-optimization)** - 13 optimization strategies
+- **[09-Testing](#09-testing)** - 7 testing fundamentals + Advanced patterns coming
+- **[10-Bundlers](#10-bundlers)** - 7 modern bundling strategies
 
-### Development & Operations
-- **[07-Bundlers](#07-bundlers)** - 7 modern bundling strategies
-- **[08-Testing](#08-testing)** - 7 testing fundamentals + Advanced patterns coming
-- **[13-Backend-Integration-Patterns](#13-backend-integration-patterns)** - 4 full-stack integration guides
+### 🏛️ Architecture Layer (11-14)
+- **[11-Micro-Frontend-Architecture](#11-micro-frontend-architecture)** - 7 micro-frontend concepts
+- **[12-Backend-Integration-Patterns](#12-backend-integration-patterns)** - 4 full-stack integration guides
+- **[13-System-Design-Frontend](#13-system-design-frontend)** - 3 comprehensive system design guides
 - **[14-Production-Deployment-Scalability](#14-production-deployment-scalability)** - Production deployment strategies
 
-### Professional Skills
-- **[09-HTML-CSS-UI](#09-html-css-ui)** - 7 UI/UX focused questions
-- **[10-Leadership-Agile-Communication](#10-leadership-agile-communication)** - 8 enhanced leadership scenarios
-- **[11-GenAI-Agents](#11-genai-agents)** - 10 AI integration questions
+### 👥 Leadership & Emerging Tech (15-16)
+- **[15-Leadership-Agile-Communication](#15-leadership-agile-communication)** - 8 enhanced leadership scenarios
+- **[16-GenAI-Agents](#16-genai-agents)** - 10 AI integration questions
 
 ---
 
-## 00-JavaScript
+## 01-JavaScript
 
 ### Core Concepts
 1. What is hoisting? How do var, let, and const differ during hoisting?
@@ -70,7 +71,7 @@
 
 ---
 
-## 01-React-Core-Advanced
+## 02-React-Core-Advanced
 
 ### Core Concepts
 1. What is the Virtual DOM and why does React use it?
@@ -109,7 +110,58 @@
 
 ---
 
-## 02-NextJS-App-Router
+## 03-Hooks-(Deep & Practical)
+
+### useState & useEffect Mastery
+1. useState, useEffect (dependency array, cleanup)
+2. How does React batch state updates?
+3. React Hooks Behavior Scenarios — useState
+4. React Hooks Behavior Scenarios — useEffect
+
+### Performance & Optimization Hooks
+5. useMemo vs useCallback – difference and use cases
+6. React Hooks Behavior Scenarios — useMemo
+7. React Hooks Behavior Scenarios — useCallback
+8. useMemo, useCallback, useRef
+
+### Advanced Hook Patterns
+9. useReducer, useContext
+10. When to use useReducer over useState
+11. React Hooks Behavior Scenarios — useReducer
+12. React Hooks Behavior Scenarios — useContext
+
+### Custom Hooks & Best Practices
+13. Custom Hooks – why & when to create
+14. Show how you'd build a custom Hook
+15. React Hooks Behavior Scenarios — Custom hooks
+16. Rules of Hooks and common pitfalls
+
+### Specialized Hooks
+17. React Hooks Behavior Scenarios — useRef
+18. React Hooks Behavior Scenarios — useLayoutEffect
+19. React Hooks Behavior Scenarios — useDispatch
+20. React Hooks Behavior Scenarios — useSelector
+21. React Hooks Behavior Scenarios — useNavigate
+22. Why can't we use async directly inside useEffect?
+
+---
+
+## 04-HTML-CSS-UI
+
+### CSS Layout & Styling
+1. Flexbox vs CSS Grid use cases.
+2. Difference between CSS Modules vs Styled Components vs Tailwind.
+3. What is BEM naming convention?
+4. What is the CSS Box Model?
+5. Explain margin collapsing in CSS
+6. Difference between inline, block, and inline-block elements
+
+### Accessibility
+7. Accessibility must-haves (aria, labels, focus control).
+
+---
+
+## 05-NextJS-App-Router
 
 ### App Router Fundamentals
 1. Difference between Pages Router and App Router.
@@ -145,7 +197,7 @@
 
 ---
 
-## 03-TypeScript-Practical
+## 06-TypeScript-Practical
 
 ### Basic Types & Interfaces
 1. Difference between type and interface.
@@ -166,7 +218,7 @@
 
 ---
 
-## 04-State-Management
+## 07-State-Management
 
 ### Context vs Redux
 1. When do you prefer Context API over Redux?
@@ -198,7 +250,7 @@
 
 ---
 
-## 05-Performance-Optimization
+## 08-Performance-Optimization
 
 ### Performance Analysis
 1. How do you identify performance issues in React?
@@ -223,22 +275,22 @@
 
 ---
 
-## 06-Micro-Frontend-Architecture
+## 09-Testing
 
-### Fundamentals
-1. What are Micro Frontends and why use them?
-2. Explain Webpack Module Federation.
-3. What is a host and what is a remote?
+### Test Types & Strategy
+1. Difference between unit and integration tests.
+2. How do you test a component that makes API calls?
+3. How do you test a custom hook?
+4. How do you test components that use context/state?
 
-### Implementation
-4. How do you share dependencies (e.g., React) across MFEs?
-5. How do MFEs communicate with each other?
-6. How do you ensure consistent design across MFEs?
-7. How do you version and deploy MFEs independently?
+### Mocking & Error Handling
+5. How do you mock fetch or axios in tests?
+6. How to handle different types of API errors?
+7. How to implement global error handling for APIs?
 
 ---
 
-## 07-Bundlers (Enhanced)
+## 10-Bundlers (Enhanced)
 
 ### Modern Bundling Strategies
 1. **Webpack Configuration Examples** - Advanced webpack setups, optimization strategies, plugin configurations, and production builds
@@ -254,51 +306,22 @@
 
 ---
 
-## 08-Testing
+## 11-Micro-Frontend-Architecture
 
-### Test Types & Strategy
-1. Difference between unit and integration tests.
-2. How do you test a component that makes API calls?
-3. How do you test a custom hook?
-4. How do you test components that use context/state?
+### Fundamentals
+1. What are Micro Frontends and why use them?
+2. Explain Webpack Module Federation.
+3. What is a host and what is a remote?
 
-### Mocking & Error Handling
-5. How do you mock fetch or axios in tests?
-6. How to handle different types of API errors?
-7. How to implement global error handling for APIs?
-
----
-
-## 09-HTML-CSS-UI
-
-### CSS Layout & Styling
-1. Flexbox vs CSS Grid use cases.
-2. Difference between CSS Modules vs Styled Components vs Tailwind.
-3. What is BEM naming convention?
-4. What is the CSS Box Model?
-5. Explain margin collapsing in CSS
-6. Difference between inline, block, and inline-block elements
-
-### Accessibility
-7. Accessibility must-haves (aria, labels, focus control).
+### Implementation
+4. How do you share dependencies (e.g., React) across MFEs?
+5. How do MFEs communicate with each other?
+6. How do you ensure consistent design across MFEs?
+7. How do you version and deploy MFEs independently?
 
 ---
 
-## 12-System-Design-Frontend
-
-### Scalable Architecture Patterns
-1. **Scalable Frontend Architecture Patterns** - Comprehensive guide covering micro-frontends, module federation, scalable component architecture, and enterprise-level system design
-2. **CDN and Caching Strategies** - Global content delivery, edge caching, service workers, and performance optimization at scale
-3. **Frontend System Design Case Studies** - Real-world examples: Netflix homepage, Slack messaging, Twitter feed, e-commerce platforms
-
-### Key Topics Covered
-- **Micro-Frontend Architecture:** Module Federation, independent deployments, cross-team collaboration
-- **Performance at Scale:** CDN strategies, caching layers, edge computing, global optimization
-- **System Design Interviews:** Step-by-step approach, capacity estimation, component design, data flow
-
----
-
-## 13-Backend-Integration-Patterns
+## 12-Backend-Integration-Patterns
 
 ### Full-Stack Integration
 1. **API Design Patterns & Integration** - RESTful services, GraphQL clients, API versioning, error handling, and integration best practices
@@ -311,6 +334,20 @@
 - **Authentication:** JWT tokens, OAuth 2.0, session management, security best practices
 - **Real-Time Features:** WebSocket connections, live updates, chat systems, collaborative editing
 - **Full-Stack Patterns:** Component-to-database data flow, state management, API design
+
+---
+
+## 13-System-Design-Frontend
+
+### Scalable Architecture Patterns
+1. **Scalable Frontend Architecture Patterns** - Comprehensive guide covering micro-frontends, module federation, scalable component architecture, and enterprise-level system design
+2. **CDN and Caching Strategies** - Global content delivery, edge caching, service workers, and performance optimization at scale
+3. **Frontend System Design Case Studies** - Real-world examples: Netflix homepage, Slack messaging, Twitter feed, e-commerce platforms
+
+### Key Topics Covered
+- **Micro-Frontend Architecture:** Module Federation, independent deployments, cross-team collaboration
+- **Performance at Scale:** CDN strategies, caching layers, edge computing, global optimization
+- **System Design Interviews:** Step-by-step approach, capacity estimation, component design, data flow
 
 ---
 
@@ -327,7 +364,7 @@
 
 ---
 
-## 10-Leadership-Agile-Communication
+## 15-Leadership-Agile-Communication
 
 ### Enhanced Leadership Framework
 1. **Technical Leadership Scenarios** - Decision-making frameworks, architectural choices, technology adoption, and strategic technical planning
@@ -343,7 +380,7 @@
 
 ---
 
-## 11-GenAI-Agents
+## 16-GenAI-Agents
 
 ### GenAI Integration
 1. Have you integrated any GenAI features in projects?
@@ -367,44 +404,50 @@
 
 ### For Different Interview Types
 
-**🔥 System Design Interviews**
-- Start with `12-System-Design-Frontend/` for scalable architecture patterns
-- Practice with real-world case studies (Netflix, Slack, Twitter)
-- Review performance optimization and CDN strategies
+**🏗️ Foundation Building (Start Here)**
+- Begin with `01-JavaScript/` for core language mastery
+- Progress through `02-React-Core-Advanced/` for React fundamentals
+- Master hooks with `03-Hooks-(Deep & Practical)/` comprehensive patterns
+- Solidify UI skills in `04-HTML-CSS-UI/`
 
-**💻 Technical Coding Interviews**
-- Master JavaScript fundamentals in `00-JavaScript/`
-- Deep-dive into React patterns in `01-React-Core-Advanced/`
-- Practice TypeScript patterns in `03-TypeScript-Practical/`
+**⚛️ Framework Mastery**
+- Deep-dive into `05-NextJS-App-Router/` for modern React development
+- Add type safety with `06-TypeScript-Practical/` patterns
+- Learn state patterns in `07-State-Management/`
+- Optimize with `08-Performance-Optimization/` techniques
 
-**🏗️ Full-Stack Developer Roles**
-- Study backend integration in `13-Backend-Integration-Patterns/`
-- Understand API design and authentication patterns
-- Learn real-time communication strategies
+**🔧 Development Excellence**
+- Master testing in `09-Testing/` for quality assurance
+- Understand build tools in `10-Bundlers/` for optimization
+- Scale with `11-Micro-Frontend-Architecture/` patterns
 
-**👥 Leadership & Behavioral Interviews**
-- Review enhanced leadership scenarios in `10-Leadership-Agile-Communication/`
-- Practice technical decision-making frameworks
-- Prepare stakeholder communication examples
+**🏛️ Senior Architecture Skills**
+- Integrate backends with `12-Backend-Integration-Patterns/`
+- Design systems using `13-System-Design-Frontend/` case studies
+- Deploy at scale with `14-Production-Deployment-Scalability/`
 
-**🚀 Production & Deployment**
-- Study CI/CD pipelines in `14-Production-Deployment-Scalability/`
-- Understand modern bundling strategies in `07-Bundlers/`
-- Learn performance optimization techniques
+**👥 Leadership & Innovation**
+- Lead teams using `15-Leadership-Agile-Communication/` frameworks
+- Stay current with `16-GenAI-Agents/` integration patterns
 
 ### Study Plan by Experience Level
 
-**3-4 Years Experience:**
-1. JavaScript + React Core (Weeks 1-2)
-2. Next.js + TypeScript (Week 3)
-3. System Design Basics (Week 4)
-4. Leadership Scenarios (Week 5)
+**3-4 Years Experience (8-Week Plan):**
+1. **Foundation Layer** - JavaScript + React Core + Hooks (Weeks 1-2)
+2. **UI & Framework** - HTML/CSS + Next.js (Week 3)
+3. **Development Tools** - TypeScript + State Management (Week 4)
+4. **Performance & Testing** - Optimization + Testing + Bundlers (Week 5)
+5. **Architecture Basics** - Micro-frontends + Backend Integration (Week 6)
+6. **System Design** - Frontend System Design (Week 7)
+7. **Production & Leadership** - Deployment + Leadership (Week 8)
 
-**4-6 Years Experience:**
-1. Advanced React + Performance (Week 1)
-2. System Design + Architecture (Week 2)
-3. Full-Stack Integration (Week 3)
-4. Leadership + Production (Week 4)
+**4-6 Years Experience (6-Week Plan):**
+1. **Core Mastery** - JavaScript/React/Hooks Deep Dive (Week 1)
+2. **Modern Stack** - Next.js + TypeScript + Performance (Week 2)
+3. **Architecture Patterns** - State Management + Micro-frontends (Week 3)
+4. **Full-Stack Integration** - Backend Patterns + System Design (Week 4)
+5. **Production Excellence** - Testing + Bundlers + Deployment (Week 5)
+6. **Leadership & Innovation** - Leadership + GenAI Integration (Week 6)
 
 ## 📝 Content Format
 
@@ -423,12 +466,14 @@ Each section contains:
 
 ## 📊 Repository Statistics
 
-- **📚 Total Content:** 180+ questions across 14 comprehensive sections
-- **📖 New Sections:** 3 major additions (System Design, Backend Integration, Production Deployment)
-- **📈 Enhancement Level:** Upgraded to 9.5/10 interview readiness
+- **📚 Total Content:** 200+ questions across 16 comprehensive sections
+- **🎯 New Structure:** Optimized learning progression from foundations to leadership
+- **📖 Major Additions:** Hooks Deep Dive (22 questions), System Design, Backend Integration
+- **📈 Enhancement Level:** Upgraded to 9.6/10 interview readiness
 - **🎯 Target Roles:** Senior Frontend, React Developer, Next.js Developer, Full Stack Developer
 - **🏢 Company Types:** Product Companies, Mid-Top Tier, Startups
 - **⏱️ Experience Range:** 3-6 years
+- **📋 Learning Path:** 4-layer progressive structure (Foundation → Framework → Architecture → Leadership)
 
 ---
 
